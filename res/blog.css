@@ -1,0 +1,128 @@
+<style>
+html {
+	margin: 0;
+	padding: 0;
+
+}
+body {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	color: #444;
+	background-color: #f3efe9;
+	zzzfont-family: Optima,Segoe,Segoe UI,Candara,Calibri,Arial,sans-serif;
+	font-family: Candara,Calibri,Segoe,Segoe UI,Optima,Arial,sans-serif;
+}
+
+.blogtitle .main {
+	font-family: AmericanTypewriter, Lucida Sans Typewriter, Lucida Typewriter, Courier New, Courier, monospace;
+	font-size: 1.3em;
+}
+.blogtitle .sub {
+	font-style: italic;
+}
+
+.pagebody {
+	position: relative;
+	zzwidth: 100%;
+	max-width: 1200px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.col1 {
+	width: 66%;
+	display: inline-block;
+}
+
+.blog {
+	margin: 0 2% 0 2%;
+	font-size: 18px;
+	max-width: 700px;
+}
+
+.blog pre, .blog code {
+	background-color: #e6e1dd;	
+}
+.blog pre {
+	padding: 0.1em 0.5em 0.1em 0.5em;
+	margin-left: 1em;
+	font-size: 0.8em;
+	overflow: hidden;
+	overflow-x: auto;
+}
+
+.col2 {
+	float: left;
+	width: 33%;
+	text-align: right;
+}
+
+.bio {
+	margin: 50px 10% 0 5%;
+	padding: 10px;
+	background-color: #e6e1dd;
+	color: #555;
+	text-align: left;
+}
+.biotitle {
+	font-size: 1.1em;
+	font-weight: bold;
+}
+
+.toc {
+	margin: 100px 10% 0 5%;
+	padding: 10px;
+	/* background-color: #dfd8d2; 
+	color: #555; */
+	text-align: left;
+}
+
+
+.dark body {
+	background-color: #333;
+	color: #ddd;	
+}
+.dark a {
+	color: #bbf;
+}
+.dark bio {
+	background-color: #555;
+	color: #bbb;
+}
+
+@media all and (max-width:700px) {	
+	.col1 {
+		width: 100%;
+	}
+	.col2 {
+		float: none;
+		width: 100%;
+	}
+	.blog {
+		margin: 0 8% 0 8%;
+	}
+	.bio {
+		max-width: 300px;
+		margin: 50px auto 0 auto;
+	}
+}
+
+@media all and (max-width:450px) {	
+	.blog {
+		margin: 0 3% 0 3%;
+	}
+	.blog pre {
+		font-size: 0.7em;	
+		max-width: 100%;
+		overflow-x: auto;
+	}
+	.bio {
+		font-size: 18px;
+		margin: 50px 10% 0 10%;
+		max-width: 80%;
+	}
+}
+
+
+</style>
