@@ -88,6 +88,7 @@ class Secret
 	public function Update( $value )
 	{
 		if ($this->locked) {
+			error_log( "still locked" );
 			return false;
 		}
 		if (is_object( $value )) {

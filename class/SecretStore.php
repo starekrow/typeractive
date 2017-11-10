@@ -39,9 +39,12 @@ class SecretStore
 	{
 		$dk = Secret::Import( file_get_contents("$this->path/data.key") );
 		if (!$dk) {
+			error_log( "Failed data key import in Secret" );
 			return false;
 		}
 		if (!$dk->Unlock( $masterKey )) {
+			var_dump( $masterKey );
+			error_log( "Failed data key unlock in Secret" );
 			return false;
 		}
 		$this->dataKeys = [];
@@ -141,8 +144,12 @@ class SecretStore
 	*/
 	public function Put( $name, $value )
 	{
-		if (!empty( $this->secrets[ $name ] )) {
-			$this->secrets[ $name ]->Update( $value );
+		if (!empty( $this->secrets[ $name ] )
+		    && !$this->secrets[ $name ]->locked) {
+			$did = $this->secrets[ $name ]->Update( $value );
+			if (!$did) {
+				error_log( "Failed secret update" );
+			}
 		} else {
 			$this->secrets[ $name ] = new Secret( $value );			
 		}
@@ -184,7 +191,7 @@ class SecretStore
 
 		$mk = new CryptoKey( $masterKey, "master" );
 
-		mkdir( $this->path, 0700, true );
+		@mkdir( $this->path, 0700, true );
 		return $this->SaveDataKeys( $mk );
 	}
 

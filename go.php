@@ -55,8 +55,14 @@ function Launch()
 	}
 
 	$gSecrets = new SecretStore( "res/secrets" );
+		$gSecrets->Reset( gethostname() );
 	if (!$gSecrets->Exists()) {
-		$gSecrets->Reset();
+		$gSecrets->Reset( gethostname() );
+	} else {
+	}
+	if (!$gSecrets->Open( gethostname() )) {
+		echo "Site misconfigured";
+		die;
 	}
 
 	// Global database config

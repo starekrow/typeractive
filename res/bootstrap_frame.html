@@ -21,7 +21,7 @@
 	.outer {
 		margin-left: 5%;
 		margin-right: 5%;
-		margin-top: 15px;
+		margin-top: 55px;
 	}
 
 	button {
@@ -33,6 +33,46 @@
 		background-color: #d4c9b9;
 		color: #444;
 	}
+
+	label {
+		display: block;	
+	}
+
+	input {
+		font-size: 16px;
+		padding: 5px 10px;
+		border-radius: 5px;
+		border: 1px solid #444;
+		margin-bottom: 15px;
+		background-color: #fff;
+		color: #444;
+	}
+
+	.titlebar {
+		width: 100%;
+		font-weight: bold;
+		font-size: 18px;
+		text-align: center;
+		display: inline-block;
+		position: fixed;
+		left: 0px;
+		top: 0px;
+		height: 34px;
+		padding-top: 10px;
+		background-color: #fff;
+		/* background-color: #9e927f; */
+	}
+	.titlebar .back {
+		position: absolute;
+		left: 8px;
+		top: 6px;
+	}
+	.titlebar .back button {
+		border-width: 0px;
+	}
+	.hidden {
+		display: none;
+	}
 	</style>
 </head>
 <body>
@@ -42,8 +82,15 @@
 			window.location = "./" + pg;
 		}
 	</script>
+<div class=titlebar>
+	<div class={{backtype}}>
+		<button onclick="jump('./')">
+			&lt;&nbsp;{{back}}
+		</button>
+	</div>
+	{{title}}
+</div>
 <div class=outer>
-	<h2>Typeractive Bootstrap Admin</h2>
 	{{content}}
 </div>
 </body>

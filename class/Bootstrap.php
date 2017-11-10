@@ -113,12 +113,44 @@ class Bootstrap
 	*/
 	public static function Page_dbsetup( $path )
 	{	
+		global $gSecrets;
 		if ($path == "") {
-			self::RenderPage( file_get_contents( "res/bootstrap_dbsetup.html" ) );
+			$html = file_get_contents( "res/bootstrap_dbsetup.html" );
+			$dc = $gSecrets->Get( "database" );
+			if (!$dc) {
+				$dc = [
+					 "username" => "root"
+					,"password" => ""
+					,"host" => "127.0.0.1"
+					,"database" => "typeractive"
+				];
+			}
+			$dc = new Dict( $dc );
+			$html = str_replace( [
+					 "{{host}}"
+					,"{{port}}"
+					,"{{database}}"
+					,"{{username}}"
+					,"{{password}}"
+				], [
+					 $dc->host
+					,$dc->port
+					,$dc->database
+					,$dc->username
+					,$dc->password
+				], $html
+			);
+			self::RenderPage( $html, "DB Setup", true );
 			return;
+		} else if ($path == "post") {
+			$dc = $gSecrets->Put( "database", $_REQUEST );
+			$html = file_get_contents( "res/bootstrap_continue.html" );
+			$html = str_replace( "{{message}}", "Settings updated.", $html );
+			$html = str_replace( "{{next}}", "dbsetup", $html );
+			self::RenderPage( $html, "DB Setup", true );
+			var_dump( $_REQUEST );
 		}
-		echo "do setup $path\r\n";
-		echo $path;	
+		echo "do setup '$path'\r\n";
 	}
 
 	/*
@@ -126,13 +158,21 @@ class Bootstrap
 	RenderPage
 	=====================
 	*/
-	public static function RenderPage( $content )
+	public static function RenderPage( $content, $title, $back = false )
 	{
 		if (is_array( $content )) {
 			$content = implode( "", $content );
 		}
 		$html = file_get_contents( "res/bootstrap_frame.html" );
 		$html = str_replace( "{{content}}", $content, $html );
+		$html = str_replace( "{{title}}", $title, $html );
+		if (!$back) {
+			$html = str_replace( "{{backtype}}", "hidden", $html );
+		} else {
+			$html = str_replace( "{{backtype}}", "back", $html );
+			$backstr = ($back === true) ? "Back" : $back;
+			$html = str_replace( "{{back}}", $backstr, $html );
+		}
 		echo $html;
 	}
 
@@ -153,7 +193,8 @@ class Bootstrap
 			return false;
 		}
 		if ($path == "") {
-			self::RenderPage( file_get_contents( "res/bootstrap_main.html" ) );
+			$main = file_get_contents( "res/bootstrap_main.html" );
+			self::RenderPage( $main, "Typeractive Bootstrap" );
 			return;
 		}
 		$pp = explode( '/', $path );

@@ -1,13 +1,19 @@
 	<div>
-		<button onclick="jump('./')">
-			<-- Back
-		</button>
-	</div>
-	<div>
-		stuff...
+	 <form id=dbinfo method=POST action="dbsetup/post">
+	 	<label for=host>Host:</label>
+		<input type=text     id=host name=host value="{{host}}">
+	 	<label for=host>Port:</label>
+		<input type=text     id=port name=port value="{{port}}">
+	 	<label for=host>Username:</label>
+		<input type=text     id=user name=username value="{{username}}">
+	 	<label for=host>Password:</label>
+		<input type=password id=pass name=password value="{{password}}">
+	 	<label for=db>Database:</label>
+		<input type=text     id=db   name=database value="{{database}}">
+	 </form>
 	</div>
 	<center>
-		<button onclick="">
+		<button onclick="document.getElementById('dbinfo').submit()">
 			Save
 		</button>
 	</center>
