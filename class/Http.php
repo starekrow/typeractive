@@ -18,6 +18,7 @@ class Http
 	public static $appRootUrl;
 	public static $fullPath;
 	public static $path;
+	public static $host;
 	public static $query;
 	public static $queryString;
 	public static $secure;
@@ -44,6 +45,31 @@ class Http
 
 	/*
 	=====================
+	Folderize
+
+	If the path part of the current URL does not end with "/", redirect with
+	a "/" appended. This sets all relative URLs accessed from the page *below*
+	the current path instead of alongside the last part.
+
+	This is done with a 301 permanent redirect.
+
+	Returns true if the redirect was done.
+	=====================
+	*/
+	public static function Folderize()
+	{
+		$parts = explode( "?", self::$url );
+		if ($parts[0][ strlen($parts[0]) - 1 ] != '/') {
+			$parts[0] .= '/';
+			$url = implode( '?', $parts );
+			self::Redirect( $url );
+			return true;
+		}
+		return false;
+	}
+
+	/*
+	=====================
 	StopClientCache
 
 	Sets headers to instruct the client not to cache this response.
@@ -60,10 +86,10 @@ class Http
 	=====================
 	SetClientCache
 
-	Sets headers to instruct the client not to cache this response.
+	Allow client to cache response for given number of seconds.
 	=====================
 	*/
-	public static function SetClientCache()
+	public static function SetClientCache( $seconds )
 	{
 		header( 'Cache-Control: no-cache, must-revalidate' );
 		header( 'Expires: Sat, 08 Oct 1995 19:00:00 GMT' );
@@ -126,19 +152,17 @@ class Http
 	{
 		self::$path = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : "";
 		self::$query = new Dict( $_REQUEST );
-		$uparts = explode( "?", $_SERVER['REQUEST_URI'] );
-		self::$url = $uparts[0];
+		$url = $_SERVER['REQUEST_URI'];
+		$uparts = explode( "?", $url );
 		self::$queryString = count($uparts) > 1 ? $uparts[1] : null;
 		self::$secure = !empty( $_SERVER['HTTPS'] );
 		$scheme = self::$secure ? 'https' : 'http';
-
+		$host = self::$host = $_SERVER['HTTP_HOST'];
+		self::$url = "$scheme://$host$url";
 		self::$fullPath = $uparts[0];
-		self::$url = "$scheme:/" . $uparts[0];
-		self::$appRootUrl = implode( "", [
-			$scheme,
-			":/",
-			substr($uparts[0], 0, strlen( $uparts[0] ) - strlen( self::$path ))
-		] );
+		$approot = substr($uparts[0], 0, strlen( $uparts[0] ) - 
+			strlen( self::$path ));
+		self::$appRootUrl = "$scheme://$host$approot";
 		self::$referrer = 
 			isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : null;
 		if (!empty( $_SERVER['REQUEST_TIME_FLOAT'] )) {

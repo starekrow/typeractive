@@ -24,7 +24,6 @@ spl_autoload_register( function( $name ) {
 
 require_once( "glib.php" );
 
-
 // Sort out how to handle the request
 $dests = [
 	 [ "path1" => "|blogs|",
@@ -40,7 +39,7 @@ $dests = [
 ];
 
 register_shutdown_function( function() {
-	echo "ack failed";
+	//echo "ack failed";
 	// ... finish logs ...
 } );
 
@@ -51,14 +50,7 @@ function Launch()
 	global $gSecrets;
 
 	Http::SetupRequest();
-	if (Http::$path === "") {
-		// Needed to make sure that relative URLs work right if we're not
-		// at the domain root.
-		$to = Http::$appRootUrl . '/';
-		if (Http::$queryString !== "") {
-			$to .= "?" . Http::$queryString;
-		}
-		Http::Redirect( $to );
+	if (Http::$path == "" && Http::Folderize()) {
 		exit();
 	}
 
@@ -73,12 +65,33 @@ function Launch()
 		$dbconfig = [
 			 "username" => "root"
 			,"password" => ""
+			,"host" => "127.0.0.1"
+			,"database" => "typeractive"
 		];
 	}
 	Sql::AutoConfig( $dbconfig );
+	SqlShadow::DefineTable( "blogs", Blog::$tableDef );
+	SqlShadow::DefineTable( "permalinks", Permalink::$tableDef );
 
-	$b = Blog::Open( "starekrow" );
-	$b->RenderPage( 4 );
+	$pl = explode( '/', Http::$path, 4 );
+	$rest = [];
+	$l = Permalink::Lookup( Http::$path );
+	if (!$l) {
+		$l = Permalink::Lookup( implode( '/', array_slice( $pl, 0, 2 ) ) );
+		$rest = array_slice( $pl, 2 );
+	}
+	if (!$l) {
+		if ($pl[1] == '--bootstrap--') {
+			return Bootstrap::Serve( implode( '/', array_slice( $pl, 2 ) ) );
+		}
+		Http::NotFound();
+		Http::ContentType( "text/plain" );
+		echo "404 Not Found";
+		return;
+	}
+	$b = Blog::Open( $l->GetReference() );
+
+	$b->RenderPage( implode( '/', $rest ) );
 }
 
 Launch();

@@ -9,7 +9,7 @@ Sql
 
 Represents a connection to a SQL-style database. 
 
-There is an extensive query-building interface that is the preferred approach.
+There is a query-building interface that is the preferred approach.
 It guarantees correct formulation of queries at the expense of some 
 flexibility. Injection attacks are ugly; use the provided parameterization 
 whenever possible. It's mostly built on PDO support and should be solid.
@@ -76,10 +76,10 @@ class Sql
 				return $instance;
 			}
 			if ($c[ 'encoding' ]) {
-				$this->SetPreferredEncoding( $c[ 'encoding' ] );
+				$instance->SetPreferredEncoding( $c[ 'encoding' ] );
 			}
 			if ($c[ 'database' ]) {
-				$this->UseDatabase( $c[ 'database' ] );
+				$instance->UseDatabase( $c[ 'database' ] );
 			}
 		}
 		return $instance;
@@ -102,6 +102,8 @@ class Sql
 			,'password' => ''
 			,'host' => null
 			,'port' => null
+			,'encoding' => null
+			,'database' => null
 		];
 		foreach ($config as $k => $v) {
 			self::$autoConfig[ $k ] = $v;
@@ -127,8 +129,7 @@ class Sql
 			$db = new \PDO(
 				"mysql:host=$host;port=$port",
 				$user,
-				$pass,
-				array( \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8" )
+				$password
 			);
 			if (!$db) {
 				return $this->Error( 79, "open failed with no explanation" );
@@ -147,7 +148,7 @@ class Sql
 	*/
 	public function UseDatabase( $dbname )
 	{
-		return $this->ExecRaw( "USE " . $this->QuoteName( $dbname ) );
+		return $this->RunQuery( "USE " . $this->QuoteName( $dbname ) );
 	}
 
 
@@ -161,7 +162,7 @@ class Sql
 	*/
 	public function SetPreferredEncoding( $encoding )
 	{
-		return $this->ExecRaw( "SET NAMES " . $this->QuoteName( $encoding ) );
+		return $this->RunQuery( "SET NAMES " . $this->QuoteName( $encoding ) );
 	}
 
 	const Q_ROW_COUNT 		= 1;
@@ -186,9 +187,13 @@ class Sql
 	protected function RunQuery( $stmt, $args = null, $type = self::Q_ROWS ) {
 		$this->ClearErrors();
 
+		error_log( $stmt );
+
+		$good = true;
 		if (!empty( $this->stcache[ $stmt ] )) {
 			$ps = $this->stcache[ $stmt ];
-			$s = $ps->execute( $args );
+			$good = $ps->execute( $args );
+			$s = $ps;
 		} else if ($args || ($type & self::Q_CACHE)) {
 			$ps = $this->db->prepare( $stmt );
 			if (!$ps) {
@@ -201,7 +206,8 @@ class Sql
 			if ($type & self::Q_CACHE) {
 				$this->stcache[ $stmt ] = $ps;
 			}
-			$s = $ps->execute( $args );
+			$good = $ps->execute( $args );
+			$s = $ps;
 		} else {
 			$s = $this->db->query( $stmt );
 		}
@@ -211,6 +217,11 @@ class Sql
 				$this->Error( -1, "Unable to run query" ); 
 			}
 			return false;
+		} else if (!$good) {
+			$this->PDOCheckError( $s );
+			if ($this->error) {
+				return false;			
+			}
 		}
 		switch ($type & self::Q_TYPE_MASK) {
 		case self::Q_ROW_COUNT:
@@ -228,7 +239,7 @@ class Sql
 			if ($type & self::Q_NUMBERED) {
 				$res = $s->fetchAll( \PDO::FETCH_NUM );
 			} else {
-				$res = $s->fetchAll( \PDO::FETCH_ASSOC );
+				$res = $s->fetchAll( \PDO::FETCH_OBJ );
 			}
 			break;
 
@@ -236,7 +247,7 @@ class Sql
 			if ($type & self::Q_NUMBERED) {
 				$res = $s->fetch( \PDO::FETCH_NUM );
 			} else {
-				$res = $s->fetch( \PDO::FETCH_ASSOC );
+				$res = $s->fetch( \PDO::FETCH_OBJ );
 			}
 			break;
 
@@ -249,6 +260,17 @@ class Sql
 		return $res;
 	}
 
+	/*
+	=====================
+	query
+	returns array of objects of results, OR
+	false on error
+	=====================
+	*/
+	function query( $stmt, $args = null ) 
+	{
+		return $this->RunQuery( $stmt, $args, self::Q_ROWS );
+	}
 
 	/*
 	=====================
@@ -342,7 +364,7 @@ class Sql
 					}
 					$rows = $v;
 				} else {
-					$err = "bad value in query->row";
+					$err = "bad value in query->rows";
 				}
 				break;
 
@@ -353,7 +375,7 @@ class Sql
 					}
 					$fields = $v;
 				} else {
-					$err = "bad value in query->row";
+					$err = "bad value in query->fields";
 				}
 				break;
 
@@ -394,7 +416,273 @@ class Sql
 		if ($err) {
 			return $this->Error( 71, $err );
 		}
-		
+
+	}
+
+	/*
+	=====================
+	QuoteTableColumn
+	=====================
+	*/
+	function QuoteTableColumn( $colname )
+	{
+		$cn = explode( '.', $colname, 2 );
+		if (count( $cn ) == 1) {
+			return $this->QuoteName( $cn[0] );
+		}
+		return $this->QuoteName( $cn[0] ) . '.' . $this->QuoteName( $cn[1] );
+	}
+
+	/*
+	=====================
+	CompileFilterExpr_r
+	=====================
+	*/
+	function CompileFilterExpr_r( $expr, $cn = null )
+	{
+		if (is_string( $expr )) {
+			$e = $this->QuoteString( $expr );
+			return $cn ? "$cn=$e" : "$e";
+		} else if (is_bool( $expr )) {
+			$e = $expr ? "TRUE" : "FALSE";
+			return $cn ? "$cn=$e" : "$e";
+		} else if (is_null( $expr )) {
+			return $cn ? "$cn IS NULL" : "IS NULL";
+		} else if (is_numeric( $expr )) {
+			return $cn ? "$cn=$expr" : "$expr";
+		} else if (is_array( $expr ) && !is_assoc( $expr )) {
+			for ($i = 0; $i < count( $expr ); ++$i) {
+
+			}
+		} else {
+			$this->Error( 71, "Invalid expression type" );
+		}
+	}
+
+	/*
+	=====================
+	CompileFilter_r
+	=====================
+	*/
+	function CompileFilter_r( $filter, $partial = false )
+	{
+		if (!$filter) {
+			return "1";
+		}
+		$grp = [];
+		if (is_assoc( $filter ) || is_object( $filter )) {
+			$combine = " AND ";
+			foreach ($filter as $fld => $constrain) {
+				$fld = $this->QuoteTableColumn( $fld );
+				$parts = [];
+				if (is_array( $constrain ) && !is_assoc( $constrain )) {
+
+				} else if (is_string( $constrain )) {
+
+				} else if (is_numeric( $constrain )) {
+
+				} else if (is_bool( $constrain )) {
+
+				} else if (is_null( $constrain )) {
+
+				}
+			}
+			// AND
+
+		} else if (is_array( $filter )) {
+			$combine = " OR ";
+			if (!count( $filter )) {
+				return "1";
+			}
+			foreach ($filter as $f) {
+				$grp[] = "(" . $this->CompileFilter_r( $f ) . ")";
+			}
+		}
+		return implode( $combine, $grp );
+	}
+
+	/*
+	=====================
+	CompileQuery
+	=====================
+	*/
+	function CompileQuery( $query )
+	{
+		$table = null;
+		$filters = null;
+		$fields = null;
+		$limit = null;
+		$start = null;
+		$order = null;
+		$rev_order = false;
+		$rtype = self::Q_INSERT_ID;
+		$as = null;
+
+		foreach ($query as $k => $v) {
+			switch ($k) {
+			case "filter":
+				if (is_assoc( $v ) || is_object( $v )) {
+
+				} else {
+					$err = "bad value in query->filter";
+				}
+				break;
+
+			case "table":
+				if (is_string( $v )) {
+
+				} else {
+					$err = "Bad value for query->table";
+				}
+				break;
+
+			case "limit":
+				if (is_int( $v )) {
+					$limit = $v;
+				} else {
+					$err = "bad value in query->limit";
+				}
+				break;
+
+			case "start":
+				if (is_int( $v )) {
+					$limit = $v;
+				} else {
+					$err = "bad value in query->start";
+				}
+				break;
+
+			case "as":
+				if (is_string( $v )) {
+					$as = $v;
+				} else {
+					$err = "bad value in query->as";
+				}
+				break;
+
+			case "order":
+				if (is_string( $v )) {
+					if ($order) {
+						$err = "query->order conflicts";
+					}
+					$order = [ $v ];
+				} else if (is_array( $v ) && !is_assoc( $v )) {
+					if ($order) {
+						$err = "query->order conflicts";
+					}
+					$order = $v;
+				} else {
+					$err = "bad value in query->orer";
+				}
+				break;
+
+			case "reverse_order":
+				if (is_bool( $v )) {
+					$rev_order = $v;
+				} else if (is_string( $v )) {
+					if ($order) {
+						$err = "query->reverse_order conflicts";
+					}
+					$order = [ $v ];
+				} else if (is_array( $v ) && !is_assoc( $v )) {
+					if ($order) {
+						$err = "query->reverse_order conflicts";
+					}
+					$order = $v;
+				} else {
+					$err = "bad value in query->reverse_order";
+				}
+				break;
+
+			case "fields":
+				if (is_array( $v ) && !is_assoc( $v )) {
+					if ($fields) {
+						$err = "query->fields conflicts";						
+					}
+					$fields = $v;
+				} else {
+					$err = "bad value in query->fields";
+				}
+				break;
+
+			case "return":
+				if ($v == "rows") {
+					$rtype = self::Q_ROWS;
+				} else if ($v == "column") {
+					$rtype = self::Q_COLUMN;
+				} else if ($v == "row") {
+					$rtype = self::Q_ROW;
+				} else if ($v == "value") {
+					$rtype = self::Q_SINGLE;
+				} else {
+					$err = "invalid query->return value";
+				}
+				break;
+
+			default:
+				$err = "Unknown insert entry $k";
+				break;
+			}
+		}
+		if (!$table || !$fields) {
+			$err = "Missing query information";
+		} else if (!count( $fields )) {
+			$err = "Empty fields list";
+		} else if ($limit !== null && $limit <= 0) {
+			$err = "Invalid limit";
+		} else if ($start !== null && $start < 0) {
+			$err = "Invalid start";
+		} 
+		if ($err) {
+			return $this->Error( 71, $err );
+		}
+		$parts = [];
+
+		if (!$filters) {
+			$where = "WHERE 1";
+		} else {
+			$where = "";
+			foreach ($filters as $k => $v) {
+
+			}
+		}
+		if ($err) {
+			return $this->Error( 71, $err );
+		}
+		$parts[] = "SELECT FROM";
+		$parts[] = $this->QuoteName( $table );
+		if ($as) {
+			$parts[] = "AS ";
+			$parts[] = $this->QuoteName( $as );
+		}
+		if ($join) {
+			// ...
+		}
+				/*
+		if (!$filters) {
+			$parts[] = "WHERE 1";
+		} else {
+			$stk = [ $filters ];
+			while (count( $stk )) {
+				$grp = [];
+				$fl = array_pop( $stk );
+				if (is_assoc( $filt ) || is_object( $filt )) {
+					foreach ($fl as $fn => $v) {
+						if (is_array( $fl ) && !is_assoc)
+					}
+					// AND
+
+				} else if (is_array( $fl )) {
+					// OR
+				} else {
+					$err = "Invalid value in query->filters";
+				}
+			}
+			foreach ($filters as $k => $v) {
+
+			}
+		}
+		*/
 	}
 
 	/*
