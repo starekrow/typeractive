@@ -13,7 +13,7 @@ Main request distributor.
 namespace Typeractive;
 
 spl_autoload_register( function( $name ) {
-	error_log( "autoload $name" );
+	//error_log( "autoload $name" );
 	if (substr( $name, 0, 12 ) == 'Typeractive\\' ) {
 		$name = substr( $name, 12 );
 		include( "class/$name.php" );
@@ -45,6 +45,56 @@ register_shutdown_function( function() {
 
 $gSecrets = null;
 
+
+/*
+=====================
+EmitSitePage
+
+Renders a "standard" site page with the given HTML.
+The page includes basic support script and css, a loader mask, and a site
+header with menu/identity block.
+=====================
+*/
+function EmitSitePage( $parts )
+{
+	$frm = file_get_contents( "res/site_frame.html" );
+	$css = file_get_contents( "res/site_frame.css" );
+	$js = file_get_contents( "res/main.js" );
+	$hdr = file_get_contents( "res/site_header.html" );
+	$ftr = file_get_contents( "res/site_footer.html" );
+
+	$parts = (object)$parts;
+	$body = empty( $parts->html ) ? "" : $parts->html;
+	if (!empty( $parts->js )) {
+		$js .= $parts->js;
+	}
+	if (!empty( $parts->css )) {
+		$css .= $parts->css;
+	}
+	$title = empty( $parts->title ) ? "Untitled" : $parts->title;
+
+	$out = str_replace( [
+			"{{header}}",
+			"{{css}}",
+			"{{script}}",
+			"{{footer}}",
+			"{{title}}",
+			"{{body}}"
+		], [
+			$hdr,
+			$css,
+			$js,
+			$ftr,
+			$title,
+			$body
+		], 
+		$frm
+	 );
+	echo $out;
+}
+
+
+
 function Launch()
 {
 	global $gSecrets;
@@ -55,10 +105,8 @@ function Launch()
 	}
 
 	$gSecrets = new SecretStore( "res/secrets" );
-		$gSecrets->Reset( gethostname() );
 	if (!$gSecrets->Exists()) {
 		$gSecrets->Reset( gethostname() );
-	} else {
 	}
 	if (!$gSecrets->Open( gethostname() )) {
 		echo "Site misconfigured";
@@ -76,27 +124,34 @@ function Launch()
 		];
 	}
 	Sql::AutoConfig( $dbconfig );
-	SqlShadow::DefineTable( "blogs", Blog::$tableDef );
-	SqlShadow::DefineTable( "permalinks", Permalink::$tableDef );
 
-	$pl = explode( '/', Http::$path, 4 );
-	$rest = [];
+	SqlShadow::DefineTable( "auth", ["autoindex" => "authid"] );
+	SqlShadow::DefineTable( "blogs", Blog::$tableDef );
+	SqlShadow::DefineTable( "users", ["autoindex" => "userid"] );
+	SqlShadow::DefineTable( "permalinks", Permalink::$tableDef );
+	SqlShadow::DefineTable( "text", ["autoindex" => "textid"] );
+	SqlShadow::DefineTable( "posts", ["autoindex" => "postid"] );
+
+	$pp = explode( '/', Http::$path, 3 );
+	$p1 = (count( $pp ) > 1) ? $pp[1] : "";
+	$p2 = (count( $pp ) > 2) ? $pp[2] : "";
+	switch ($p1) {
+	case "":
+		EmitSitePage( [ "html" => "hi" ] );
+		return;
+	case "user":
+		break;
+	case "--bootstrap--":
+		return Bootstrap::Serve( implode( '/', array_slice( $pl, 2 ) ) );
+	}
 	$l = Permalink::Lookup( Http::$path );
 	if (!$l) {
-		$l = Permalink::Lookup( implode( '/', array_slice( $pl, 0, 2 ) ) );
-		$rest = array_slice( $pl, 2 );
-	}
-	if (!$l) {
-		if ($pl[1] == '--bootstrap--') {
-			return Bootstrap::Serve( implode( '/', array_slice( $pl, 2 ) ) );
-		}
 		Http::NotFound();
 		Http::ContentType( "text/plain" );
 		echo "404 Not Found";
 		return;
 	}
 	$b = Blog::Open( $l->GetReference() );
-
 	$b->RenderPage( implode( '/', $rest ) );
 }
 

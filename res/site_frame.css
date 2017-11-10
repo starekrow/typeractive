@@ -1,0 +1,37 @@
+
+html {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+*, *:before, *:after {
+	box-sizing: inherit;
+}
+
+body {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	color: #444;
+	background-color: #f3efe9;
+	font-family: Candara,Calibri,Segoe,Segoe UI,Optima,Arial,sans-serif;
+}
+
+.blogtitle .main {
+	font-family: AmericanTypewriter, Lucida Sans Typewriter, Lucida Typewriter, Courier New, Courier, monospace;
+	font-size: 1.3em;
+}
+.blogtitle .sub {
+	font-style: italic;
+}
+
+.sitebody {
+	position: relative;
+	max-width: 1200px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+
+</style>

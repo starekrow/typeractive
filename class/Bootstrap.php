@@ -82,12 +82,12 @@ class Bootstrap
 				return self::RequestAuth();
 			}
     	} else {
-	    	if (empty( $auth[ $username ] )) {
+	    	if (empty( $auth->$username )) {
 				password_hash( $password, PASSWORD_BCRYPT, [ "cost" => 12 ] );
 	    		return self::RequestAuth();
 	    	}
-	    	if (!password_verify( $password, $auth[ $username ] )) {
-	    		return self::RequestAuth();	    		
+	    	if (!password_verify( $password, $auth->$username )) {
+	    		return self::RequestAuth();
 	    	}
 	    }
 	    $_SESSION['bootstrap_auth'] = true;
@@ -143,14 +143,63 @@ class Bootstrap
 			self::RenderPage( $html, "DB Setup", true );
 			return;
 		} else if ($path == "post") {
-			$dc = $gSecrets->Put( "database", $_REQUEST );
-			$html = file_get_contents( "res/bootstrap_continue.html" );
-			$html = str_replace( "{{message}}", "Settings updated.", $html );
-			$html = str_replace( "{{next}}", "dbsetup", $html );
-			self::RenderPage( $html, "DB Setup", true );
-			var_dump( $_REQUEST );
+			$pl = ["username", "database", "password", "host", "port"];
+			$vals = array_intersect_key( $_REQUEST, array_fill_keys( $pl, 1 ) );
+			$gSecrets->Put( "database", $vals );
+			$res = [
+				"run" => "alert( 'Settings saved.' );"
+			];
+			//var_dump( $pl );
+			echo json_encode( $res );
+			return;
 		}
 		echo "do setup '$path'\r\n";
+	}
+
+	/*
+	=====================
+	Page_adminuser
+	=====================
+	*/
+	public static function Page_adminuser( $path )
+	{
+		global $gSecrets;
+		if ($path == "") {
+			$html = file_get_contents( "res/bootstrap_adminuser.html" );
+			self::RenderPage( $html, "Admin User", true );
+			return;
+		} else if ($path == "post") {
+			$un = $_REQUEST['username'];
+			$pw = $_REQUEST['password'];
+
+			$un = preg_replace( "/ +/", " ", trim( $un ) );
+			if (!User::ValidateUsername( $un )) {
+				echo json_encode( [ "run" => "alert( 'Invalid username' );" ] );
+				return;
+			}
+			$pw = trim( $pw );
+			if (!User::ValidatePassword( $pw )) {
+				echo json_encode( [ "run" => "alert( 'Invalid password' );" ] );
+				return;
+			}
+			$pw = password_hash( $pw, PASSWORD_BCRYPT, [ "cost" => 12 ] );
+
+			if (!User::Create( $un, $pw )) {
+				echo json_encode( [ "run" => "alert( 'Unable to create user' );" ] );
+				return;
+			}
+
+			$ul = $gSecrets->Get( "bootstrap" );
+			if (!$ul) {
+				$ul = (object)[];
+			}
+			$ul->$un = $pw;
+			$gSecrets->Put( "bootstrap", $ul );
+			echo json_encode( [ "run" => "alert( 'User $un created' );" ] );
+			return;
+		}		
+		Http::NotFound();
+		echo "404 Not Found";
 	}
 
 	/*
@@ -172,6 +221,7 @@ class Bootstrap
 			$html = str_replace( "{{backtype}}", "back", $html );
 			$backstr = ($back === true) ? "Back" : $back;
 			$html = str_replace( "{{back}}", $backstr, $html );
+			$html = str_replace( "{{backto}}", "", $html );
 		}
 		echo $html;
 	}

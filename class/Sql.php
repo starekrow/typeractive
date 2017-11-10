@@ -73,6 +73,7 @@ class Sql
 				,$c[ 'host' ]
 				,$c[ 'port' ]
 			)) {
+				error_log( "DB Connection failed" );
 				return $instance;
 			}
 			if ($c[ 'encoding' ]) {
@@ -135,6 +136,7 @@ class Sql
 				return $this->Error( 79, "open failed with no explanation" );
 			}
 			$this->db = $db;
+			$this->connected = true;
 		} catch( \PDOException $e ) {
 			return $this->Error( 79, $e->getMessage() );
 		}
@@ -253,6 +255,7 @@ class Sql
 
 		case self::Q_INSERT_ID:
 			$res = $this->db->lastInsertId();
+			break;
 
 		default:
 			return $this->Error( 72, "Unknown query type " . $type );
@@ -739,6 +742,7 @@ class Sql
 		}
 		$this->errorCode = $code;
 		$this->error = ($msg === false) ? "DB Error " . $code : $msg;
+		error_log( $this->error );
 		return false;
 	}
 

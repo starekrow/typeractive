@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,6 +33,7 @@
 		margin-bottom: 15px;
 		background-color: #d4c9b9;
 		color: #444;
+		min-width: 200px;
 	}
 
 	label {
@@ -69,29 +71,170 @@
 	}
 	.titlebar .back button {
 		border-width: 0px;
+		color: #35a8ff;
+		background-color: #fff;
+		min-width: 20px;
 	}
 	.hidden {
 		display: none;
+	}
+
+	.loadermask {
+		left: 0px;
+		top: 0px;
+		width: 100%;
+		height: 100%;
+		position: fixed;
+		display: none;
+	}
+	.loadermask .mask {
+		background-color: #fff;
+		opacity: 0.7;
+		width: 100%;
+		height: 100%;
+		position: absolute;
+	}
+	.loadermask table {
+		/* vertical-align: middle; */
+		font-size: 18px;
+		width: 100%;
+		height: 100%;
+		text-align: center;
+		position: absolute;
 	}
 	</style>
 </head>
 <body>
 	<script>
+		
+		function docid(n) { return document.getElementById(n); }
+		function wait( ms ) {
+			return new Promise( function(res, rej) {
+				setTimeout( function() {
+					res();
+				}, ms );
+			} );
+		}
+		function loadText( method, url, data )
+		{
+			return new Promise( function( res, rej ) {
+				var xhr = new XMLHttpRequest();
+				xhr.open(method, url, true);
+				xhr.onreadystatechange = function () {
+					if (xhr.readyState != XMLHttpRequest.DONE) {
+						return;
+					}
+					if (xhr.status == 200) {
+						res( xhr.responseText );
+					} else {
+						rej( xhr.status );
+					}
+				};
+				xhr.send( data );
+			} );
+		}		
 		function jump( pg )
 		{
 			window.location = "./" + pg;
 		}
+		function autoload( method, url, data, mask )
+		{
+			if (mask) {
+				docid( "loadermask" ).style.display = "block";
+			}
+			return wait(1).then( function() {
+				return loadText( method, url, data );
+			} ).then( function( text ) {
+				if (mask) {
+					docid( "loadermask" ).style.display = "none";
+				}
+				if (text.length && text[0] == '{') {
+					try {
+						var d = JSON.parse( text );
+						if ("back" in d) {
+							if (!d.back) {
+								docid("backbox").className="hidden";
+							} else {
+								docid("backbox").className="back";
+								docid("backtext").innerHTML="Back";
+								docid("backtext").onclick=function() {
+									jump( d.back_to );
+								};
+							}
+						}
+						if ("page" in d) {
+							docid( "outer" ).innerHTML=page;
+						}
+						if ("run" in d) {
+							eval(d.run);
+						}
+						if ("goto" in d) {
+							window.location = d.goto;
+						}
+						return d;
+					} catch(e) {
+						// fall through to dump response
+					}
+				}
+				docid( "outer" ).innerHTML = text;
+			}, function( rej ) {
+				if (mask) {
+					docid( "loadermask" ).style.display = "none";
+				}
+				return Promise.reject( rej );
+			} );
+		}
+		function submitForm( frm, ev )
+		{
+			if (ev) {
+				ev.preventDefault();
+			}
+			if (typeof frm == "string") {
+				frm = docid( frm );
+			}
+			var fd = new FormData( frm );
+			fd.append( "_autoloader_", "1" );
+			var will = autoload( 
+					frm.getAttribute("method" ), 
+					frm.getAttribute("action"), 
+					fd,
+					true 
+			).then( function( r ) { 
+				return r;
+			}, function( err ) {
+				alert( "An error occurred while submitting this form." );
+			} );
+			if (ev) { return false; }
+			return will;
+		}
+		function formHijack(ev) {
+			return submitForm( this, ev );
+		}
+		function setupForms() {
+			var fl = document.getElementsByTagName("FORM");
+			for (var i = 0; i < fl.length; i++) {
+				fl[i].removeEventListener( 'submit', formHijack );
+				fl[i].addEventListener( 'submit', formHijack );
+			}
+		}
+		window.onload = function() {
+			setupForms();
+		}
 	</script>
 <div class=titlebar>
-	<div class={{backtype}}>
-		<button onclick="jump('./')">
-			&lt;&nbsp;{{back}}
+	<div id=backbox class={{backtype}}>
+		<button id=backbtn onclick="jump('{{backto}}')">
+			&lt;&nbsp;<span id=backtext>{{back}}</span>
 		</button>
 	</div>
 	{{title}}
 </div>
-<div class=outer>
+<div id=outer class=outer>
 	{{content}}
+</div>
+<div id=loadermask class=loadermask>
+	<div class=mask></div>
+	<table><tr><td>Loading...</td></tr></table>
 </div>
 </body>
 </html>

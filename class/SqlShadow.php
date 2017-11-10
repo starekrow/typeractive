@@ -237,7 +237,7 @@ class SqlShadow implements
 		$stitch = ' WHERE ';
 		foreach ($this->def->index as $col) {
 			$qcol = $db->QuoteName( $col );
-			$sql .= $stitch . $qcol . '=:$col';
+			$sql .= $stitch . $qcol . "=:$col";
 			$stitch = ' AND '; 
 		}
 		$this->def->indexQuery = $sql;
@@ -255,9 +255,9 @@ class SqlShadow implements
 		$qtbl = $db->QuoteName( $this->table );
 		$sql = "SELECT * FROM $qtbl";
 		$stitch = ' WHERE ';
-		foreach ($cols as $col) {
+		foreach ($cols as $col => $val) {
 			$qcol = $db->QuoteName( $col );
-			$sql .= $stitch . $qcol . '=:$col';
+			$sql .= $stitch . $qcol . "=:$col";
 			$stitch = ' AND '; 
 		}
 		// TODO: limit, offset
