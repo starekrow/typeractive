@@ -1,0 +1,50 @@
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Typeractive Bootstrap</title>
+	<style type="text/css">
+	html {
+		margin: 0;
+		padding: 0;
+
+	}
+	body {
+		width: 100%;
+		padding: 0;
+		margin: 0;
+		color: #444;
+		background-color: #f3efe9;
+		font-family: Candara,Calibri,Segoe,Segoe UI,Optima,Arial,sans-serif;
+		box-sizing: border-box;
+	}
+
+	.outer {
+		margin-left: 5%;
+		margin-right: 5%;
+		margin-top: 15px;
+	}
+
+	button {
+		font-size: 16px;
+		padding: 5px 10px;
+		border-radius: 5px;
+		border: 1px solid #444;
+		margin-bottom: 15px;
+		background-color: #d4c9b9;
+		color: #444;
+	}
+	</style>
+</head>
+<body>
+	<script>
+		function jump( pg )
+		{
+			window.location = "./" + pg;
+		}
+	</script>
+<div class=outer>
+	<h2>Typeractive Bootstrap Admin</h2>
+	{{content}}
+</div>
+</body>
+</html>

@@ -96,6 +96,48 @@ class Bootstrap
 
 	/*
 	=====================
+	Page_test
+	=====================
+	*/
+	public static function Page_test( $path )
+	{	
+		Http::ContentType( "text/plain" );
+		echo "OK\r\n";
+		echo $path;	
+	}
+
+	/*
+	=====================
+	Page_dbsetup
+	=====================
+	*/
+	public static function Page_dbsetup( $path )
+	{	
+		if ($path == "") {
+			self::RenderPage( file_get_contents( "res/bootstrap_dbsetup.html" ) );
+			return;
+		}
+		echo "do setup $path\r\n";
+		echo $path;	
+	}
+
+	/*
+	=====================
+	RenderPage
+	=====================
+	*/
+	public static function RenderPage( $content )
+	{
+		if (is_array( $content )) {
+			$content = implode( "", $content );
+		}
+		$html = file_get_contents( "res/bootstrap_frame.html" );
+		$html = str_replace( "{{content}}", $content, $html );
+		echo $html;
+	}
+
+	/*
+	=====================
 	Serve
 	=====================
 	*/
@@ -110,11 +152,20 @@ class Bootstrap
 		if (!self::CheckAuth()) {
 			return false;
 		}
-
 		if ($path == "") {
-			readfile( "res/bootstrap_main.html" );
+			self::RenderPage( file_get_contents( "res/bootstrap_main.html" ) );
 			return;
 		}
-		echo $path;
+		$pp = explode( '/', $path );
+		if (preg_match( '/^[-_a-zA-Z0-9]+$/', $pp[0] )) {
+			$mth = 'Page_' . str_replace( '-', '_', $pp[0] );
+			$cls = get_called_class();
+			if (method_exists( $cls, $mth )) {
+				$cls::{$mth}( implode( '/', array_slice( $pp, 1 ) ) );
+				return;
+			}
+		}
+		Http::NotFound();
+		echo "404 Not Found";
 	}
 }
