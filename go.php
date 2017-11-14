@@ -73,6 +73,9 @@ function EmitSitePage( $parts )
 	}
 	$title = empty( $parts->title ) ? "Untitled" : $parts->title;
 
+	$hdr = str_replace( "{{approot}}", Http::$appRootUrl, $hdr );
+	$ftr = str_replace( "{{approot}}", Http::$appRootUrl, $ftr );
+
 	$out = str_replace( [
 			"{{header}}",
 			"{{css}}",
@@ -93,6 +96,49 @@ function EmitSitePage( $parts )
 	echo $out;
 }
 
+function DoLogin()
+{
+	$args = new Dict( $_REQUEST );
+	if ($args['password'] === null || $args['username'] === null) {
+		$res = [
+			"run" => 'login_error(' .
+					json_encode( "Login form submission error" ) .
+				");"
+		];
+		echo json_encode( $res );
+		return;
+	}
+	$user = User::LookupUsername( $args['username'] );
+	if (!$user) {
+		$res = [
+			"run" => 'login_error(' .
+					json_encode( "Unknown user" ) .
+				");"
+		];
+		echo json_encode( $res );
+		return;
+	}
+	if (!$user->CheckPassword( $args['password'] )) {
+		$res = [
+			"run" => 'login_error(' .
+					json_encode( "Incorrect password" ) .
+				");"
+		];
+		echo json_encode( $res );
+		return;		
+	}
+	$info = [
+		 "username" => $user->GetName()
+		,"id" => $user->id
+	];
+	$res = [
+		"run" => 'login_close(' .
+				json_encode( $info ) . 
+			");"
+	];
+	echo json_encode( $res );
+
+}
 
 
 function Launch()
@@ -139,6 +185,12 @@ function Launch()
 	case "":
 		EmitSitePage( [ "html" => "hi" ] );
 		return;
+	case "-":
+		if ($p2 == "login") {
+			DoLogin();
+			return;
+		}
+		break;
 	case "user":
 		break;
 	case "--bootstrap--":

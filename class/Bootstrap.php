@@ -182,7 +182,6 @@ class Bootstrap
 				echo json_encode( [ "run" => "alert( 'Invalid password' );" ] );
 				return;
 			}
-			$pw = password_hash( $pw, PASSWORD_BCRYPT, [ "cost" => 12 ] );
 
 			if (!User::Create( $un, $pw )) {
 				echo json_encode( [ "run" => "alert( 'Unable to create user' );" ] );

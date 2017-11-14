@@ -1,7 +1,452 @@
-<div class=blogtitle>
-<center>
-	<span class=main>
-		Starekrow's Palace of Glittery Things
-	</span>
-</center>
-<center><span class=sub>A blog about code and design</span></center>
+<style type="text/css">
+
+svg {
+	fill: currentColor;
+}
+
+#siteheader_bar {
+	overflow: hidden;
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 40px;
+	line-height: 38px;
+	font-size: 16px;
+	background-color: #444;
+	color: #f0f0f0;
+	vertical-align: baseline;
+}
+
+#siteheader_bar a {
+	color: #f0f0f0;
+}
+
+/*
+#siteheader_bar a:hover {
+	background-color: #f0f0f0;
+	color: #444;	
+}
+*/
+
+#siteheader_bar a:visited {
+	color: #f0f0f0;
+}
+
+#siteheader_bar ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	height: 40px;
+}
+
+#siteheader_bar li {
+	display: inline-block;
+	height: 40px;
+}
+
+#siteheader_bar .sitename {
+	font-weight: bold;
+	font-size: 20px;
+}
+#siteheader_bar .tld {
+	font-size: 14px;
+}
+
+#siteheader_bar li a {
+	height: 100%;
+	display: inline-block;
+	text-align: center;
+	text-decoration: none;
+	padding: 0 8px 0 8px;
+}
+
+#siteheader_bar li:first-child {
+	padding-left: 10px;
+	padding-right: 10px;
+
+}
+
+#siteheader_bar li:last-child {
+	float: right;
+	padding-right: 10px;
+}
+
+
+#siteheader_bar .icon {
+	vertical-align: middle;
+	width: 30px;
+	height: 30px;
+	margin-bottom: 4px;
+}
+
+
+
+
+
+
+
+#siteheader_compact_menu {
+	overflow: hidden;
+	position: fixed;
+	left: -30px;
+	top: -30px;
+	display: none;
+	width: 70px;
+	height: 70px;
+	background-color: #444;
+	color: #f0f0f0;
+	border-color: #aaa;
+	border-width: 2px;
+	border-bottom-right-radius: 50%;
+	border-style: solid;
+}
+
+#siteheader_compact_menu .graphic {
+	display: block;
+	position: absolute;
+	left: 30px;
+	top: 30px;
+
+}
+
+#siteheader_compact_menu .graphic svg {
+	width: 30px;
+	height: 30px;
+
+}
+
+#siteheader_compact_account {
+	overflow: hidden;
+	position: fixed;
+	right: -30px;
+	top: -30px;
+	display: none;
+	width: 70px;
+	height: 70px;
+	background-color: #444;
+	color: #f0f0f0;
+	border-color: #aaa;
+	border-width: 2px;
+	border-bottom-left-radius: 50%;
+	border-style: solid;
+}
+
+#siteheader_compact_account .graphic {
+	display: block;
+	position: absolute;
+	right: 30px;
+	top: 30px;
+}
+
+#siteheader_compact_account .graphic svg {
+	width: 30px;
+	height: 30px;
+}
+
+
+#siteheader_menu {
+	display: none;
+	overflow: hidden;
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	min-width: 250px;
+	height: 100%;
+	line-height: 38px;
+	font-size: 18px;
+	background-color: #444;
+	color: #f0f0f0;
+	vertical-align: baseline;
+}
+
+#siteheader_menu a {
+	color: #f0f0f0;
+}
+
+/*
+#siteheader_bar a:hover {
+	background-color: #f0f0f0;
+	color: #444;	
+}
+*/
+
+#siteheader_menu a:visited {
+	color: #f0f0f0;
+}
+
+#siteheader_menu ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+#siteheader_menu li {
+	display: block;
+	height: 40px;
+	border-bottom: 1px solid #c0c0c0;
+}
+
+#siteheader_menu .sitename {
+	font-weight: bold;
+	font-size: 20px;
+}
+#siteheader_menu .tld {
+	font-size: 14px;
+}
+
+#siteheader_menu li a {
+	height: 100%;
+	display: inline-block;
+	text-align: center;
+	text-decoration: none;
+	padding: 0 8px 0 8px;
+}
+
+#siteheader_menu li:first-child {
+	text-align: center;
+}
+
+#siteheader_menu li:last-child {
+}
+
+#siteheader_menu .icon {
+	vertical-align: middle;
+	width: 30px;
+	height: 30px;
+	margin-bottom: 4px;
+}
+
+
+#siteheader_login {
+	position: fixed;
+	left: 0px; top: 0px;
+	width: 100%; height: 100%;
+	font-size: 18px;
+	display: none;
+}
+
+#siteheader_login .mask {
+	position: absolute;
+	left: 0px; top: 0px;
+	width: 100%; height: 100%;
+	opacity: 0;
+	background-color: #000;
+	transition-property: opacity;
+	transition-duration: 0.5s;
+}
+#siteheader_login .dialog {
+	display: table;
+	position: absolute;
+	left: 0px; top: 0px;
+	width: 100%; height: 100%;
+}
+#siteheader_login .dialog > div {
+	display: table-cell;
+	text-align: center;
+	vertical-align: middle;
+	left: 0px; top: 0px;
+	width: 100%; height: 100%;
+}
+#siteheader_login .dialog .close {
+	position: absolute;
+	right: 5px;
+	top: 5px;
+	cursor: pointer;
+}
+#siteheader_login .dialog .close svg {
+	width: 30px;
+	height: 30px;
+}
+#siteheader_login .dialog .title {
+	font-size: 1.5em;
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+#siteheader_login .dialog .subtitle {
+	margin-bottom: 25px;
+}
+#siteheader_login .dialog form {
+	position: relative;
+	background-color: #f0f0f0;
+	min-width: 250px;
+	width: 50%;
+	max-width: 400px;
+	padding: 20px;
+	border-radius: 5px;
+	display: inline-block;
+	opacity: 0;
+	margin-top: -50px;
+	transition-property: opacity, margin-top;
+	transition-duration: 0.5s, 0.5s;
+}
+#siteheader_login .dialog form .fields {
+	text-align: left;
+	display: inline-block;
+	width: 80%;
+}
+#siteheader_login .dialog form .fields input {
+	font-size: 18px;
+	width: 100%;
+	margin-top: 5px;
+}
+#siteheader_login .dialog button {
+	margin-top: 20px;
+}
+
+@media all and (max-width:600px) {	
+	#siteheader_compact_menu, #siteheader_compact_account {
+		display: block;
+	}
+	#siteheader_bar {
+		display: none;
+	}
+}
+
+
+
+</style>
+<!-- site menu bar (full layout) -->
+<div id=siteheader_bar>
+	<ul>
+		<li><a href="{{approot}}/"       		>
+				<span class=sitename>MetalCoder</span><span class=tld>.com</span>
+			</a>	
+		<li><a href="{{approot}}/starekrow"    >Blog</a>
+		<li><a href="{{approot}}/projects"		>Projects</a>
+		<li><a href="{{approot}}/about"   		>About</a>
+		<li><a href="{{approot}}/signin"  		
+				id=siteheader_bar_account
+				onclick="login_start(); return false;">
+				<svg id=siteheader_bar_noavatar class=icon>
+					<use xlink:href="#svg-face"></use>
+				</svg>
+				<span id=siteheader_bar_nouser>
+					Sign In
+				</span>
+				<span id=siteheader_bar_username></span>
+			</a>
+	</ul>
+</div>
+
+<!-- site menu button (small layout) -->
+<div id=siteheader_compact_menu>
+	<div class=graphic>
+		<svg><use xlink:href="#svg-menu"></use></svg>
+	</div>
+</div>
+
+<!-- site menu button (small layout) -->
+<div id=siteheader_compact_account onclick="login_start(); return false;">
+	<div class=graphic>
+		<svg><use xlink:href="#svg-face"></use></svg>
+	</div>
+</div>
+
+<!-- site menu slider (small layout) -->
+<div id=siteheader_menu>
+	<ul>
+		<li><a href="{{approot}}/"       >
+				<span class=sitename>MetalCoder</span><span class=tld>.com</span>
+			</a>	
+		<li><a href="{{approot}}/blog"    >Blog</a>
+		<li><a href="{{approot}}/projects">Projects</a>
+		<li><a href="{{approot}}/about"   >About</a>
+		<li><a href="{{approot}}/-/signin"  >
+				Sign In
+			</a>
+	</ul>
+</div>
+
+<!-- login dialog/form -->
+<div id=siteheader_login>
+	<div id=siteheader_login_mask class=mask></div>
+	<div id=siteheader_login_dialog class=dialog>
+	 <div>
+		<form id=siteheader_login_form action="{{approot}}/-/login" method=POST>
+		 	<div class=close onclick="login_close();">
+				<svg><use xlink:href="#svg-clear"></use></svg>
+		 	</div>
+			<div class=title>MetalCoder</div>
+			<div class=subtitle>Sign In</div>
+			<div class=fields>
+				<div>
+					<label for=login_username>Username:</label>
+				</div>
+				<input id=login_username name=username type=text>
+				<div>
+					<label for=login_password>Password:</label>
+				</div>
+				<input id=login_password name=password type=password>
+			</div>
+			<div>
+				<button type=submit>
+					Sign In
+				</button>
+			</div>
+			<div>
+				<a href="{{approot}}/recover_password">Forgot Password?</a>
+			</div>
+		</form>
+	 </div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	function login_start() {
+		$n('siteheader_login').style.display = "block";
+		wait(1).then( function() {
+			$n('siteheader_login_mask').style.opacity = 0.7;
+			$n('siteheader_login_form').style.opacity = 1;
+			$n('siteheader_login_form').style.marginTop = "0px";
+			$n('login_username').value = "";
+			$n('login_password').value = "";
+			$n('login_username').focus();
+		});
+	}
+	function login_error( msg ) {
+		alert( msg );
+		//$n('login_username').value = "";
+		//$n('login_password').value = "";
+		$n('login_username').focus();
+	}
+	function login_close( info ) {
+		wait( 1000 ).then( function() {
+			$n('siteheader_login_form').style.marginTop = "-50px";
+			$n('siteheader_login').style.display = "none";
+		} );
+		$n('siteheader_login_form').style.marginTop = "40px";
+		$n('siteheader_login_form').style.opacity = 0;
+		$n('siteheader_login_mask').style.opacity = 0;
+		if (info) {
+			$n('siteheader_login').style.display = "block";
+			$n('siteheader_bar_username').innerHTML = info.username;
+			$n('siteheader_bar_nouser').style.display = "none";
+			$n('siteheader_bar_username').style.display = "inline";
+		}
+	}
+</script>
+
+
+<svg xmlns="http://www.w3.org/2000/svg" 
+	 xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 style="display: none;">
+	<symbol id="svg-face" viewBox="0 0 24 24">
+	    <path d="M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-.29.02-.58.05-.86 2.36-1.05 4.23-2.98 5.21-5.37C11.07 8.33 14.05 10 17.42 10c.78 0 1.53-.09 2.25-.26.21.71.33 1.47.33 2.26 0 4.41-3.59 8-8 8z"/>
+	    <path d="M0 0h24v24H0z" fill="none"/>
+	</symbol>
+
+	<symbol id="svg-menu" viewBox="0 0 24 24">
+	    <path d="M0 0h24v24H0z" fill="none"/>
+	    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+	</symbol>
+
+	<symbol id="svg-clear" viewBox="0 0 24 24">
+    	<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+	    <path d="M0 0h24v24H0z" fill="none"/>
+	</symbol>
+</svg>
+
+</svg>

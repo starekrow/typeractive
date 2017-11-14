@@ -65,6 +65,31 @@ class SqlShadow implements
 
 	/*
 	=====================
+	ParseDateTime
+
+	Parses the given SQL-style DATETIME value
+	=====================
+	*/
+	public function ParseDateTime( $val )
+	{
+		return strtotime( $val );
+	}
+
+	/*
+	=====================
+	DateTime
+
+	Given a timestamp, returns a suitable DATETIME value
+	=====================
+	*/
+	public function DateTime( $val )
+	{
+		return date("Y-m-d H:i:s", $val );
+	}
+
+
+	/*
+	=====================
 	MarkDirty
 	=====================
 	*/
@@ -296,6 +321,12 @@ class SqlShadow implements
 		$this->isNew = false;
 		$this->allDirty = false;
 		$this->dirty = [];
+		if (!$got) {
+			return false;
+		}
+		foreach ($got[0] as $k => $v) {
+			$this->data[ $k ] = $v;
+		}
 		return $got;
 	}
 

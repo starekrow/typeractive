@@ -29,118 +29,137 @@ class User
 	protected function __construct( $record )
 	{
 		$this->record = $record;
-		$this->id = $record->blogid;
+		$this->id = $record->userid;
 	}
 
 	/*
 	=====================
-	RenderPage
-
-	Outputs an HTML page for the given blog entry	
+	GetName
 	=====================
 	*/
-	public function RenderPage( $id )
+	public function GetName()
 	{
-		$md = new \Parsedown();
-
-		$text = file_get_contents( "res/b$id.md" );
-		$blog = $md->text( $text );
-
-		$text = file_get_contents( "res/qbio.md" );
-		$bio = $md->text( $text );
-
-		$out = str_replace( [
-				"{{header}}",
-				"{{css}}",
-				"{{blog}}",
-				"{{bio}}",
-				"{{toc}}"
-			], [
-				file_get_contents( "res/header.html" ),
-				file_get_contents( "res/blog.css" ),
-				$blog,
-				$bio,
-				file_get_contents( "res/toc.html" )
-			], 
-			file_get_contents( "res/frame.html" )
-		 );
-		echo $out;
-	}
-
-
-	/*
-	=====================
-	SetAuthor
-	=====================
-	*/
-	public function SetAuthor( $authorid )
-	{
-		$this->record->authorid = $authorid;
+		return $this->record->name;
 	}
 
 	/*
 	=====================
-	SetBiography
+	CheckPassword
 	=====================
 	*/
-	public function SetBiography( $text )
+	public function CheckPassword( $password )
 	{
-		// TODO: safety checks
-		$t = new TextRecord( $this->record->biotext );
-		$this->record->biotext = $t->textid;
-		$t->SetText( $text );
-	}
-
-	/*
-	=====================
-	SetTitle
-	=====================
-	*/
-	public function SetTitle( $title )
-	{
-		$t = new TextRecord( $this->record->titletext );
-		$this->record->titletext = $t->textid;
-		$t->SetText( $text );
-	}
-
-	/*
-	=====================
-	SetHeader
-	=====================
-	*/
-	public function SetHeader( $text )
-	{
-		// TODO: safety checks
-		$t = new TextRecord( $this->record->headertext );
-		$this->record->headertext = $t->textid;
-		$t->SetText( $text );
-	}
-
-	/*
-	=====================
-	SetDefaultPost
-	=====================
-	*/
-	public function SetDefaultPost( $post )
-	{
-		if ($post === "latest") {
-			$post = null;
+		$password = trim( $password );
+		$auth = new SqlShadow( "auth" );
+		$auth->userid = $this->id;
+		$auth->method = "username";
+		if (!$auth->Load()) {
+			return false;
 		}
-		$this->record->rootpost = $post;
+		if (!$auth->token1) {
+			return false;
+		}
+		return self::VerifyPassword( $password, $auth->token1 );
 	}
 
 	/*
 	=====================
-	CanonicalUsername
+	EmailInUse
+	=====================
+	*/
+	public static function EmailInUse( $email )
+	{
+		$ar = new SqlShadow( "auth" );
+		$ar->method = "email";
+		$ar->methodkey = self::NormalizeEmail( $email );
+		if ($ar->Load()) {
+			return true;
+		}
+		return false;
+	}
+
+	/*
+	=====================
+	UsernameInUse
+	=====================
+	*/
+	public static function UsernameInUse( $name )
+	{
+		$ar = new SqlShadow( "auth" );
+		$ar->method = "username";
+		$ar->methodkey = self::NormalizeUsername( $name );
+		if ($ar->Load()) {
+			return true;
+		}
+		return false;
+	}
+
+	/*
+	=====================
+	LookupUsername
+
+	Looks up a user by username.
+	Returns a User instance or `false` if the user doesn't exist.
+	=====================
+	*/
+	public static function LookupUsername( $name )
+	{
+		$ar = new SqlShadow( "auth" );
+		$ar->method = "username";
+		$ar->methodkey = self::NormalizeUsername( $name );
+		$user = false;
+		if ($ar->Load()) {
+			$user = self::Open( $ar->userid );
+		}
+		return $user;
+	}
+
+	/*
+	=====================
+	LookupEmail
+
+	Looks up a user by email address.
+	Returns a User instance or `false` if the user doesn't exist.
+	=====================
+	*/
+	public static function LookupEmail( $email )
+	{
+		$ar = new SqlShadow( "auth" );
+		$ar->method = "email";
+		$ar->methodkey = self::NormalizeEmail( $email );
+		$user = false;
+		if ($ar->Load()) {
+			$user = self::Open( $ar->userid );			
+		}
+		return $user;
+	}
+
+
+	/*
+	=====================
+	NormalizeEmail
+	=====================
+	*/
+	public static function NormalizeEmail( $email )
+	{
+		$email = trim( $email );
+		$ep = explode( "@", $email, 2 );
+		// TODO: do this right: nameprep, comments etc.
+		return implode( "@", [ $ep[0], strtolower( $ep[1] ) ] );
+	}
+
+	/*
+	=====================
+	NormalizeUsername
 	Calculates the canonical username from a display or hand-entered name.
-	Canonical names are:
+	Normalized names are:
 		* trimmed
 		* all lower-case
 		* all punctuation replaced with '-'
 	Returns false if the name is not valid.
 	=====================
 	*/
-	public static function CanonicalUsername( $name )
+	public static function NormalizeUsername( $name )
 	{
 		$name = trim( $name );
 		if (!self::ValidateUsername( $name )) {
@@ -185,22 +204,49 @@ class User
 
 	/*
 	=====================
+	HashPassword
+	=====================
+	*/
+	public static function HashPassword( $password )
+	{
+		$pw = password_hash( $pw, PASSWORD_BCRYPT, [ "cost" => 12 ] );
+	}
+
+	/*
+	=====================
+	VerifyPassword
+	=====================
+	*/
+	public static function VerifyPassword( $password, $hash )
+	{
+		return password_verify( $password, $hash );
+	}
+
+	/*
+	=====================
 	Create
 
 	Creates a new user. The name must be unique.
 	Returns a User instance or `false` if the creation failed.
 	=====================
 	*/
-	public static function Create( $name, $pwhash = null )
+	public static function Create( $name, $password = null )
 	{
 		// First, try to enter the authentication record. This will tell us
 		// whether the username is available.
 		$name = trim( $name );
-		$xn = self::CanonicalUsername( $name );
+		$xn = self::NormalizeUsername( $name );
 		$ar = new SqlShadow( "auth" );
 		$ar->method = "username";
 		$ar->methodkey = $xn;
+
+		$pwhash = null;
+		if (isset( $password )) {
+			$pwhash = self::HashPassword( $password );
+		}
+
 		$ar->token1 = $pwhash;
+		$ar->token2 = $name;
 		if (!$ar->Flush()) {
 			return false;
 		}
@@ -220,15 +266,15 @@ class User
 	=====================
 	Open
 
-	Gets a Blog instance for the given id.
+	Gets a User instance for the given id.
 	=====================
 	*/
-	public static function Open( $blogid )
+	public static function Open( $userid )
 	{
-		$rec = new SqlShadow( "blogs", [ "blogid" => $blogid ] );
+		$rec = new SqlShadow( "users", [ "userid" => $userid ] );
 		if (!$rec->Load()) {
-			throw new \Exception( "unable to load blog $blogidå" );
+			throw new \Exception( "unable to load user $userid" );
 		}
-		return new Blog( $rec );
+		return new User( $rec );
 	}
 }
