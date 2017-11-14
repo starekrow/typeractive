@@ -5,7 +5,7 @@ namespace Typeractive;
 /*
 ================================================================================
 
-Permalink
+LinkData
 
 Management for link names.
 
@@ -16,14 +16,10 @@ the same item are also possible.
 ================================================================================
 */
 
-class Permalink
+class LinkData
 {
 	public $id;
 	protected $record;
-
-	public static $tableDef = [
-		 "autoindex" => "linkid"
-	];
 
 	/*
 	=====================
@@ -85,7 +81,7 @@ class Permalink
 	*/
 	public static function Lookup( $link, $type = null, $parent = null )
 	{
-		$rec = new SqlShadow( "permalinks" );
+		$rec = new SqlShadow( "links" );
 		$rec->link = $link;
 		if ($type) {
 			$rec->type = $type;
@@ -110,7 +106,7 @@ class Permalink
 	*/
 	public static function Register( $link, $type, $id, $parent = null )
 	{
-		$rec = new SqlShadow( "permalinks" );
+		$rec = new SqlShadow( "links" );
 		$rec->link = $link;
 		$rec->type = $type;
 		$rec->otherid = $id;

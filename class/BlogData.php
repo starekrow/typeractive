@@ -5,14 +5,14 @@ namespace Typeractive;
 /*
 ================================================================================
 
-Blog
+BlogData
 
 Represents a single blog. Use factory methods to instantiate. 
 
 ================================================================================
 */
 
-class Blog
+class BlogData
 {
 	public $id;
 	protected $record;

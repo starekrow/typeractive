@@ -5,14 +5,14 @@ namespace Typeractive;
 /*
 ================================================================================
 
-User
+UserData
 
-Represents a user.
+User record handling
 
 ================================================================================
 */
 
-class User
+class UserData
 {
 	public $id;
 	protected $record;
@@ -259,7 +259,7 @@ class User
 		}
 		$ar->userid = $rec->userid;
 		$ar->Flush();
-		return new User( $rec );
+		return new UserData( $rec );
 	}
 
 	/*
@@ -275,6 +275,6 @@ class User
 		if (!$rec->Load()) {
 			throw new \Exception( "unable to load user $userid" );
 		}
-		return new User( $rec );
+		return new UserData( $rec );
 	}
 }

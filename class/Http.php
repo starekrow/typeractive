@@ -26,6 +26,7 @@ class Http
 	public static $headers;
 	public static $timestamp;
 	public static $source;
+	public static $method;
 
 	/*
 	=====================
@@ -179,6 +180,7 @@ class Http
 			}
 		}
 		self::$headers = $hdrs;
+		self::$method = strtoupper( $_SERVER['REQUEST_METHOD'] );
 	}
 
 	/*

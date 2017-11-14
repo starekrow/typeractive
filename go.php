@@ -178,23 +178,27 @@ function Launch()
 	Sql::AutoConfig( $dbconfig );
 
 	SqlShadow::DefineTable( "auth", ["autoindex" => "authid"] );
-	SqlShadow::DefineTable( "blogs", Blog::$tableDef );
+	SqlShadow::DefineTable( "blogs", ["autoindex" => "blogid"] );
 	SqlShadow::DefineTable( "users", ["autoindex" => "userid"] );
-	SqlShadow::DefineTable( "permalinks", Permalink::$tableDef );
+	SqlShadow::DefineTable( "links", ["autoindex" => "linkid"] );
 	SqlShadow::DefineTable( "text", ["autoindex" => "textid"] );
 	SqlShadow::DefineTable( "posts", ["autoindex" => "postid"] );
 
 	$pp = explode( '/', Http::$path, 3 );
 	$p1 = (count( $pp ) > 1) ? $pp[1] : "";
 	$p2 = (count( $pp ) > 2) ? $pp[2] : "";
+	$req = [
+		 "args" => $_REQUEST
+		,"path" => $p2
+		,"headers" => Http::$headers
+	];
 	switch ($p1) {
 	case "":
 		EmitSitePage( [ "html" => "hi" ] );
 		return;
 	case "-":
 		if ($p2 == "login") {
-			DoLogin();
-			return;
+			return (new LoginServer())->Respond( $req );
 		}
 		break;
 	case "user":
