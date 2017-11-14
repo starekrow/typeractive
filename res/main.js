@@ -118,6 +118,7 @@ function setupForms() {
 		fl[i].addEventListener( 'submit', formHijack );
 	}
 }
+
 window.onload = function() {
 	setupForms();
 }

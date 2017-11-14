@@ -62,6 +62,10 @@ function EmitSitePage( $parts )
 	$js = file_get_contents( "res/main.js" );
 	$hdr = file_get_contents( "res/site_header.html" );
 	$ftr = file_get_contents( "res/site_footer.html" );
+	$ext = file_get_contents( "res/ext_dialog.html" );
+
+	/* Note: At some point it would be possible to parse out the various 
+	   embedded <style> tags and move them to the head, but meh. */
 
 	$parts = (object)$parts;
 	$body = empty( $parts->html ) ? "" : $parts->html;
@@ -82,14 +86,16 @@ function EmitSitePage( $parts )
 			"{{script}}",
 			"{{footer}}",
 			"{{title}}",
-			"{{body}}"
+			"{{body}}",
+			"{{html-extensions}}"
 		], [
 			$hdr,
 			$css,
 			$js,
 			$ftr,
 			$title,
-			$body
+			$body,
+			$ext
 		], 
 		$frm
 	 );

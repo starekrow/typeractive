@@ -1,0 +1,157 @@
+<!-- Copyright (C) 2017 David O'Riva. MIT License -->
+<style type="text/css">
+
+	.dialog_holder {
+		position: fixed;
+		display: table;
+		left: 0px;
+		top: 0px;
+		width: 100%;
+		height: 100%;
+	}
+
+	.dialog_holder > .mask {
+		position: absolute;
+		opacity: 0;
+		background-color: #000;
+		transition-property: opacity;
+		transition-duration: 0.5s;
+		left: 0px;
+		top: 0px;
+		width: 100%;
+		height: 100%;
+	}
+	.dialog_holder > .positioner {
+		display: table-cell;
+		text-align: center;
+		vertical-align: middle;
+	}
+	.dialog_holder > .positioner > .container {
+		position: relative;
+		background-color: #fff;
+		color: #444;
+		min-width: 150px;
+		min-height: 150px;
+		padding: 20px;
+		border-radius: 5px;
+		display: inline-block;
+		opacity: 0;
+		margin-top: -50px;
+		transition-property: opacity, margin-top;
+		transition-duration: 0.5s, 0.5s;
+	}
+
+	.dialog_holder > .positioner > .container > .closer {
+		position: absolute;
+		right: 5px;
+		top: 5px;
+		cursor: pointer;
+	}
+	.dialog_holder > .positioner > .container > .closer svg {
+		width: 30px;
+		height: 30px;
+	}
+
+	.dialog_holder .dialog_title {
+		font-size: 1.5em;
+		margin-bottom: 5px;
+		font-weight: bold;
+	}
+
+	.dialog_holder .dialog_subtitle {
+		margin-bottom: 25px;
+	}
+
+</style>
+
+<div id=dialog_template style="display:none;">
+	<div class=dialog_holder>
+		<div class=mask></div>
+		<div class=positioner>
+			<div class=container>
+				<div class=closer>
+					<svg><use xlink:href="#svg-dialog-close"></use></svg>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<svg xmlns="http://www.w3.org/2000/svg" 
+	 xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 style="display: none;">
+	<symbol id="svg-dialog-close" viewBox="0 0 24 24">
+    	<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+	    <path d="M0 0h24v24H0z" fill="none"/>
+	</symbol>
+</svg>
+
+<script type="text/javascript">
+
+	/*
+	=====================
+	openDialog
+	=====================
+	*/
+	function openDialog( src, onclose )
+	{
+		var el = document.createElement( "DIV" );
+		el.innerHTML = $n("dialog_template").innerHTML.trim();
+		el = el.firstChild;
+		document.body.appendChild( el );
+		var ctr = el.getElementsByClassName( "container" )[0];
+		var msk = el.getElementsByClassName( "mask" )[0];
+		if (!src) {
+			src = document.createElement( "DIV" );
+		} else if (typeof src == "string") {
+			src = $n(src);
+		}
+		el.getElementsByClassName( "closer" )[0].onclick = function() {
+			if (onclose) {
+				if (onclose( src ) === false) {
+					return;
+				}
+			}
+			closeDialog();
+		};
+		var origin = src.parentNode;
+		ctr.appendChild( src )
+		wait(1).then( function() {
+			msk.style.opacity = 0.7;
+			ctr.style.opacity = 1;
+			ctr.style.marginTop = "0px";
+		} );
+		var oldcd = window.closeDialog;
+		window.closeDialog = function( now ) {
+			window.closeDialog = oldcd;
+			if (now) {
+				if (origin) {
+					origin.appendChild( src );
+				}
+				el.parentNode.removeChild( el );
+			} else {
+				wait( 500 ).then( function() {
+					if (origin) {
+						origin.appendChild( src );
+					}
+					el.parentNode.removeChild( el );
+				} );
+				ctr.style.marginTop = "40px";
+				ctr.style.opacity = 0;
+				msk.style.opacity = 0;
+			}
+			return true;
+		}
+		return src;
+	}
+
+	/*
+	=====================
+	closeDialog
+	=====================
+	*/
+	function closeDialog()
+	{
+		return false;
+	}	
+</script>

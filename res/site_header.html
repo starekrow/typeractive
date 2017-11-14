@@ -219,81 +219,10 @@ svg {
 	margin-bottom: 4px;
 }
 
-
-#siteheader_login {
-	position: fixed;
-	left: 0px; top: 0px;
-	width: 100%; height: 100%;
-	font-size: 18px;
-	display: none;
-}
-
-#siteheader_login .mask {
-	position: absolute;
-	left: 0px; top: 0px;
-	width: 100%; height: 100%;
-	opacity: 0;
-	background-color: #000;
-	transition-property: opacity;
-	transition-duration: 0.5s;
-}
-#siteheader_login .dialog {
-	display: table;
-	position: absolute;
-	left: 0px; top: 0px;
-	width: 100%; height: 100%;
-}
-#siteheader_login .dialog > div {
-	display: table-cell;
-	text-align: center;
-	vertical-align: middle;
-	left: 0px; top: 0px;
-	width: 100%; height: 100%;
-}
-#siteheader_login .dialog .close {
-	position: absolute;
-	right: 5px;
-	top: 5px;
-	cursor: pointer;
-}
-#siteheader_login .dialog .close svg {
-	width: 30px;
-	height: 30px;
-}
-#siteheader_login .dialog .title {
-	font-size: 1.5em;
-	margin-bottom: 5px;
-	font-weight: bold;
-}
-#siteheader_login .dialog .subtitle {
-	margin-bottom: 25px;
-}
-#siteheader_login .dialog form {
-	position: relative;
-	background-color: #f0f0f0;
+#siteheader_login_form {
 	min-width: 250px;
 	width: 50%;
 	max-width: 400px;
-	padding: 20px;
-	border-radius: 5px;
-	display: inline-block;
-	opacity: 0;
-	margin-top: -50px;
-	transition-property: opacity, margin-top;
-	transition-duration: 0.5s, 0.5s;
-}
-#siteheader_login .dialog form .fields {
-	text-align: left;
-	display: inline-block;
-	width: 80%;
-}
-#siteheader_login .dialog form .fields input {
-	font-size: 18px;
-	width: 100%;
-	margin-top: 5px;
-}
-#siteheader_login .dialog button {
-	margin-top: 20px;
 }
 
 @media all and (max-width:600px) {	
@@ -347,85 +276,55 @@ svg {
 
 <!-- site menu slider (small layout) -->
 <div id=siteheader_menu>
-	<ul>
-		<li><a href="{{approot}}/"       >
-				<span class=sitename>MetalCoder</span><span class=tld>.com</span>
-			</a>	
-		<li><a href="{{approot}}/blog"    >Blog</a>
-		<li><a href="{{approot}}/projects">Projects</a>
-		<li><a href="{{approot}}/about"   >About</a>
-		<li><a href="{{approot}}/-/signin"  >
-				Sign In
-			</a>
-	</ul>
 </div>
 
-<!-- login dialog/form -->
-<div id=siteheader_login>
-	<div id=siteheader_login_mask class=mask></div>
-	<div id=siteheader_login_dialog class=dialog>
-	 <div>
-		<form id=siteheader_login_form action="{{approot}}/-/login" method=POST>
-		 	<div class=close onclick="login_close();">
-				<svg><use xlink:href="#svg-clear"></use></svg>
-		 	</div>
-			<div class=title>MetalCoder</div>
-			<div class=subtitle>Sign In</div>
-			<div class=fields>
-				<div>
-					<label for=login_username>Username:</label>
-				</div>
-				<input id=login_username name=username type=text>
-				<div>
-					<label for=login_password>Password:</label>
-				</div>
-				<input id=login_password name=password type=password>
-			</div>
+
+<!-- bits and pieces -->
+<div style="display:none">
+
+	<!-- login dialog/form -->
+	<form id=siteheader_login_form action="{{approot}}/-/login" method=POST>
+		<div class=dialog_title>MetalCoder</div>
+		<div class=dialog_subtitle>Sign In</div>
+		<div class=fields>
 			<div>
-				<button type=submit>
-					Sign In
-				</button>
+				<label for=login_username>Username:</label>
 			</div>
+			<input id=login_username name=username type=text>
 			<div>
-				<a href="{{approot}}/recover_password">Forgot Password?</a>
+				<label for=login_password>Password:</label>
 			</div>
-		</form>
-	 </div>
-	</div>
+			<input id=login_password name=password type=password>
+		</div>
+		<div>
+			<button type=submit>
+				Sign In
+			</button>
+		</div>
+		<div>
+			<a href="{{approot}}/recover_password">Forgot Password?</a>
+		</div>
+	</form>
 </div>
 
 <script type="text/javascript">
 	function login_start() {
-		$n('siteheader_login').style.display = "block";
-		wait(1).then( function() {
-			$n('siteheader_login_mask').style.opacity = 0.7;
-			$n('siteheader_login_form').style.opacity = 1;
-			$n('siteheader_login_form').style.marginTop = "0px";
-			$n('login_username').value = "";
-			$n('login_password').value = "";
-			$n('login_username').focus();
-		});
+		openDialog( "siteheader_login_form" );
+		$n('login_username').value = "";
+		$n('login_password').value = "";
+		$n('login_username').focus();
 	}
 	function login_error( msg ) {
-		alert( msg );
+		if (msg) alert( msg );
 		//$n('login_username').value = "";
 		//$n('login_password').value = "";
 		$n('login_username').focus();
 	}
 	function login_close( info ) {
-		wait( 1000 ).then( function() {
-			$n('siteheader_login_form').style.marginTop = "-50px";
-			$n('siteheader_login').style.display = "none";
-		} );
-		$n('siteheader_login_form').style.marginTop = "40px";
-		$n('siteheader_login_form').style.opacity = 0;
-		$n('siteheader_login_mask').style.opacity = 0;
-		if (info) {
-			$n('siteheader_login').style.display = "block";
-			$n('siteheader_bar_username').innerHTML = info.username;
-			$n('siteheader_bar_nouser').style.display = "none";
-			$n('siteheader_bar_username').style.display = "inline";
-		}
+		closeDialog();
+		$n('siteheader_bar_username').innerHTML = info.username;
+		$n('siteheader_bar_nouser').style.display = "none";
+		$n('siteheader_bar_username').style.display = "inline";
 	}
 </script>
 
@@ -447,6 +346,4 @@ svg {
     	<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
 	    <path d="M0 0h24v24H0z" fill="none"/>
 	</symbol>
-</svg>
-
 </svg>
