@@ -24,27 +24,12 @@ spl_autoload_register( function( $name ) {
 
 require_once( "glib.php" );
 
-// Sort out how to handle the request
-$dests = [
-	 [ "path1" => "|blogs|",
-	   "!run" => "blog/draw",
-	   "!strip_path" => 1 ]
-	,[ "path1" => "|wptest|",
-	   "!run" => "webpanel/test",
-	   "!strip_path" => 1 ]
-	,[ "path1" => "|krod|",
-	   "!run" => "krod/main",
-	   "!strip_path" => 1 ]
-	//,[ ]
-];
-
 register_shutdown_function( function() {
-	//echo "ack failed";
-	// ... finish logs ...
+	// TODO: finish logs, handle fatal, etc...
 } );
 
+// TODO: Reimplement as "default" of SecretStore?
 $gSecrets = null;
-
 
 /*
 =====================
@@ -102,51 +87,13 @@ function EmitSitePage( $parts )
 	echo $out;
 }
 
-function DoLogin()
-{
-	$args = new Dict( $_REQUEST );
-	if ($args['password'] === null || $args['username'] === null) {
-		$res = [
-			"run" => 'login_error(' .
-					json_encode( "Login form submission error" ) .
-				");"
-		];
-		echo json_encode( $res );
-		return;
-	}
-	$user = User::LookupUsername( $args['username'] );
-	if (!$user) {
-		$res = [
-			"run" => 'login_error(' .
-					json_encode( "Unknown user" ) .
-				");"
-		];
-		echo json_encode( $res );
-		return;
-	}
-	if (!$user->CheckPassword( $args['password'] )) {
-		$res = [
-			"run" => 'login_error(' .
-					json_encode( "Incorrect password" ) .
-				");"
-		];
-		echo json_encode( $res );
-		return;		
-	}
-	$info = [
-		 "username" => $user->GetName()
-		,"id" => $user->id
-	];
-	$res = [
-		"run" => 'login_close(' .
-				json_encode( $info ) . 
-			");"
-	];
-	echo json_encode( $res );
+/*
+=====================
+Launch
 
-}
-
-
+Outer distributor for requests.
+=====================
+*/
 function Launch()
 {
 	global $gSecrets;
@@ -194,11 +141,20 @@ function Launch()
 	];
 	switch ($p1) {
 	case "":
-		EmitSitePage( [ "html" => "hi" ] );
+		MainPageServer::Handle( $req );
 		return;
 	case "-":
-		if ($p2 == "login") {
-			return (new LoginServer())->Respond( $req );
+		$pp = explode( '/', $p2, 2 );
+		$p2 = $pp[0];
+		$pp[0] = "";
+		$req['path'] = implode( "", $pp );
+		switch ($p2) {
+		case "login":
+			return LoginServer::Handle( $req );
+		case "dashboard":
+			return DashboardServer::Handle( $req );
+		case "blog":
+			return BlogEditor::Handle( $req );
 		}
 		break;
 	case "user":
@@ -206,7 +162,7 @@ function Launch()
 	case "--bootstrap--":
 		return Bootstrap::Serve( implode( '/', array_slice( $pl, 2 ) ) );
 	}
-	$l = Permalink::Lookup( Http::$path );
+	$l = LinkData::Lookup( Http::$path );
 	if (!$l) {
 		Http::NotFound();
 		Http::ContentType( "text/plain" );

@@ -44,6 +44,40 @@ class UserData
 
 	/*
 	=====================
+	GetBlog
+
+	Returns BlogData for the user's primary blog, or null
+	=====================
+	*/
+	public function GetBlog()
+	{
+		$bl = BlogData::Find( [ "userid" => $this->id ] );
+		if (!$bl) {
+			return null;
+		}
+		return $bl[0];
+	}
+
+	/*
+	=====================
+	AddBlog
+
+	Returns BlogData for the user's primary blog, or null
+	=====================
+	*/
+	public function AddBlog()
+	{
+		if ($this->GetBlog()) {
+			throw new \Exception( "Users may only have one blog (for now)" );
+		}
+		$b = BlogData::Create();
+		$b->SetAuthor( $this->id );
+		$b->Save();
+		return $b;
+	}
+
+	/*
+	=====================
 	CheckPassword
 	=====================
 	*/
@@ -264,12 +298,12 @@ class UserData
 
 	/*
 	=====================
-	Open
+	Load
 
 	Gets a User instance for the given id.
 	=====================
 	*/
-	public static function Open( $userid )
+	public static function Load( $userid )
 	{
 		$rec = new SqlShadow( "users", [ "userid" => $userid ] );
 		if (!$rec->Load()) {

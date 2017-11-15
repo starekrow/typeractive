@@ -38,7 +38,7 @@ table tr {
 
 
 button {
-	font-size: 16px;
+	font-size: 18px;
 	padding: 10px 15px;
 	border-radius: 5px;
 	border: 1px solid #444;
@@ -48,9 +48,23 @@ button {
 	min-width: 150px;
 }
 
+label {
+	font-size: 18px;
+}
+
 input {
-	font-size: 16px;
+	font-size: 18px;
 	padding: 5px 10px;
+	border-radius: 5px;
+	border: 1px solid #444;
+	margin-bottom: 15px;
+	background-color: #fff;
+	color: #444;
+}
+
+textarea {
+	font-size: 18px;
+	 padding: 5px 10px; 
 	border-radius: 5px;
 	border: 1px solid #444;
 	margin-bottom: 15px;

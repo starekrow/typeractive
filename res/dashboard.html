@@ -1,0 +1,101 @@
+<style type="text/css">
+
+.dashboard {
+	width: 80%;
+	max-width: 1000;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+
+.signout {
+	text-align: right;
+	display: inline-block;
+	width: 100%;
+}
+
+
+.dashboard h2, .dashboard h3 {
+	text-align: center;
+}
+
+.module {
+	border-radius: 5px;
+	background-color: #e8e4e1;
+	display: inline-block;
+	/* min-width: 250px; */
+	min-height: 250px;
+	min-width: 45%;
+	margin-bottom: 10px;
+	vertical-align: top;
+}
+.module h1 {
+	text-align: center;
+	font-size: 1.3em;
+	font-weight: normal;
+	font-style: none;
+}
+.profile table {
+	width: 80%; margin-left: 10%;
+}
+.profile th {
+	text-align: right;
+}
+
+@media all and (max-width:600px) {
+	.dashboard {
+		width: 95%;
+	}
+	.module {
+		width: 95%;
+	}
+}
+
+</style>
+<div class=dashboard>
+
+<h2>Dashboard</h2>
+
+<div class=signout>
+	<form action="<<approot>>/-/login" use-autoloader=1 method=POST>
+		<input name=logout value=1 type=hidden>
+		<button type=submit>
+			Sign Out
+		</button>
+	</form>
+</div>
+
+<div class=module>
+	<h1>Blog</h1>
+	<form action="<<approot>>/-/blog/new" method=GET>
+		<button type=submit>
+			New Post
+		</button>
+	</form>
+	<form action="<<approot>>/-/blog/configure" method=GET>
+		<button type=submit>
+			Configure
+		</button>
+	</form>
+</div>
+
+<div class=module>
+	<h1>Pages</h1>
+	<form action="<<approot>>/-/page/create" method=GET>
+		<button type=submit>
+			New Page
+		</button>
+	</form>
+</div>
+
+<div class="module profile">
+	<h1>Profile</h1>
+	<table>
+		<tr><th>Username:<td><<username>>
+		<tr><th>Email:<td><<user-email>>
+	</table>
+</div>
+
+
+
+</div>

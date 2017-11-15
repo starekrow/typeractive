@@ -131,6 +131,37 @@ class BlogData
 
 	/*
 	=====================
+	Save
+	=====================
+	*/
+	public function Save()
+	{
+		$this->record->Flush();
+	}
+
+	/*
+	=====================
+	Find
+
+	Searches blog records by field values. 
+	Returns `false` or an array of BlogData.
+	=====================
+	*/
+	public static function Find( $fields )
+	{
+		$rec = new SqlShadow( "blogs" );
+		$got = $rec->Find( $fields );
+		if (!$got) {
+			return false;
+		}
+		foreach ($got as &$val) {
+			$val = new BlogData( $val );
+		}
+		return $got;
+	}
+
+	/*
+	=====================
 	Create
 
 	Creates a new blog.
@@ -141,24 +172,24 @@ class BlogData
 	{
 		$rec = new SqlShadow( "blogs" );
 		if (!$rec->Flush()) {
-			throw new Exception( "unable to create blog" );
+			throw new \Exception( "unable to create blog" );
 		}
-		return new Blog( $rec );
+		return new BlogData( $rec );
 	}
 
 	/*
 	=====================
-	Open
+	Load
 
-	Gets a Blog instance for the given id.
+	Gets a BlogData instance for the given id.
 	=====================
 	*/
-	public static function Open( $blogid )
+	public static function Load( $blogid )
 	{
 		$rec = new SqlShadow( "blogs", [ "blogid" => $blogid ] );
 		if (!$rec->Load()) {
 			throw new \Exception( "unable to load blog $blogid" );
 		}
-		return new Blog( $rec );
+		return new BlogData( $rec );
 	}
 }

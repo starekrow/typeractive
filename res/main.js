@@ -72,6 +72,13 @@ function autoload( method, url, data, mask )
 				if ("goto" in d) {
 					window.location = d.goto;
 				}
+				if ("at" in d) {
+					if (typeof d == "string") {
+						d = { url: d };
+					}
+					window.history.pushState( d.state || {}, 
+						d.title || "", d.url );
+				}
 				return d;
 			} catch(e) {
 				// fall through to dump response
@@ -114,8 +121,12 @@ function formHijack(ev) {
 function setupForms() {
 	var fl = document.getElementsByTagName("FORM");
 	for (var i = 0; i < fl.length; i++) {
-		fl[i].removeEventListener( 'submit', formHijack );
-		fl[i].addEventListener( 'submit', formHijack );
+		var f = fl[i];
+		if (!f.getAttribute("use-autoloader")) {
+			continue;
+		}
+		f.removeEventListener( 'submit', formHijack );
+		f.addEventListener( 'submit', formHijack );
 	}
 }
 

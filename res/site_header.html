@@ -18,6 +18,10 @@ svg {
 	vertical-align: baseline;
 }
 
+#siteheader_bar_spacer {
+	height: 40px;
+}
+
 #siteheader_bar a {
 	color: #f0f0f0;
 }
@@ -84,7 +88,21 @@ svg {
 
 
 
+#siteheader_compact {
+	display: none;
+}
 
+#siteheader_compact_menu_spacer {
+	float: left;
+	width: 45px;
+	height: 45px;
+}
+
+#siteheader_compact_account_spacer {
+	float: right;
+	width: 45px;
+	height: 45px;
+}
 
 
 #siteheader_compact_menu {
@@ -92,7 +110,6 @@ svg {
 	position: fixed;
 	left: -30px;
 	top: -30px;
-	display: none;
 	width: 70px;
 	height: 70px;
 	background-color: #444;
@@ -122,7 +139,6 @@ svg {
 	position: fixed;
 	right: -30px;
 	top: -30px;
-	display: none;
 	width: 70px;
 	height: 70px;
 	background-color: #444;
@@ -221,56 +237,81 @@ svg {
 
 #siteheader_login_form {
 	min-width: 250px;
-	width: 50%;
+	width: 50vw;
 	max-width: 400px;
+	text-align: center;
+}
+#siteheader_login_form .fields {
+	text-align: left;
+	display: inline-block;
+	margin-left: auto;
+	margin-right: auto;
+}
+#siteheader_login_form button {
+	margin-top: 30px;
 }
 
 @media all and (max-width:600px) {	
-	#siteheader_compact_menu, #siteheader_compact_account {
+	#siteheader_compact {
 		display: block;
 	}
-	#siteheader_bar {
+	#siteheader_full {
 		display: none;
 	}
 }
 
+#siteheader_bar_nouser {
+	<<hide_for_user>>
+}
 
+#siteheader_bar_username {
+	<<hide_for_guest>>
+}
 
 </style>
 <!-- site menu bar (full layout) -->
-<div id=siteheader_bar>
-	<ul>
-		<li><a href="{{approot}}/"       		>
-				<span class=sitename>MetalCoder</span><span class=tld>.com</span>
-			</a>	
-		<li><a href="{{approot}}/starekrow"    >Blog</a>
-		<li><a href="{{approot}}/projects"		>Projects</a>
-		<li><a href="{{approot}}/about"   		>About</a>
-		<li><a href="{{approot}}/signin"  		
-				id=siteheader_bar_account
-				onclick="login_start(); return false;">
-				<svg id=siteheader_bar_noavatar class=icon>
-					<use xlink:href="#svg-face"></use>
-				</svg>
-				<span id=siteheader_bar_nouser>
-					Sign In
-				</span>
-				<span id=siteheader_bar_username></span>
-			</a>
-	</ul>
-</div>
-
-<!-- site menu button (small layout) -->
-<div id=siteheader_compact_menu>
-	<div class=graphic>
-		<svg><use xlink:href="#svg-menu"></use></svg>
+<div id=siteheader_full>
+	<div id=siteheader_bar>
+		<ul>
+			<li><a href="<<approot>>/"       		>
+					<span class=sitename>MetalCoder</span><span class=tld>.com</span>
+				</a>	
+			<li><a href="<<approot>>/starekrow"    >Blog</a>
+			<li><a href="<<approot>>/projects"		>Projects</a>
+			<li><a href="<<approot>>/about"   		>About</a>
+			<li><a href="<<approot>>/signin"  		
+					id=siteheader_bar_account
+					onclick="click_account(); return false;">
+					<svg id=siteheader_bar_noavatar class=icon>
+						<use xlink:href="#svg-face"></use>
+					</svg>
+					<span id=siteheader_bar_nouser>
+						Sign In
+					</span>
+					<span id=siteheader_bar_username><<username>></span>
+				</a>
+		</ul>
 	</div>
+	<div id=siteheader_bar_spacer></div>
 </div>
 
-<!-- site menu button (small layout) -->
-<div id=siteheader_compact_account onclick="login_start(); return false;">
-	<div class=graphic>
-		<svg><use xlink:href="#svg-face"></use></svg>
+<div id=siteheader_compact>
+	<!-- site menu button (small layout) -->
+	<div id=siteheader_compact_menu>
+		<div class=graphic>
+			<svg><use xlink:href="#svg-menu"></use></svg>
+		</div>
+	</div>
+	<div id=siteheader_compact_menu_spacer>
+	</div>
+
+	<!-- site menu button (small layout) -->
+	<div id=siteheader_compact_account onclick="click_account(); return false;">
+		<div class=graphic>
+			<svg><use xlink:href="#svg-face"></use></svg>
+		</div>
+	</div>
+	<div id=siteheader_compact_account_spacer>
 	</div>
 </div>
 
@@ -283,7 +324,7 @@ svg {
 <div style="display:none">
 
 	<!-- login dialog/form -->
-	<form id=siteheader_login_form action="{{approot}}/-/login" method=POST>
+	<form id=siteheader_login_form action="<<approot>>/-/login" method=POST>
 		<div class=dialog_title>MetalCoder</div>
 		<div class=dialog_subtitle>Sign In</div>
 		<div class=fields>
@@ -302,12 +343,30 @@ svg {
 			</button>
 		</div>
 		<div>
-			<a href="{{approot}}/recover_password">Forgot Password?</a>
+			<a href="<<approot>>/recover_password">Forgot Password?</a>
 		</div>
 	</form>
+
+	<!-- logout dialog -->
+	<form id=siteheader_logout_form action="<<approot>>/-/login" method=POST>
+		<input name=logout value=1 type=hidden>
+	</form>
+
 </div>
 
 <script type="text/javascript">
+	var username = "<<username>>";
+	function click_account() {
+		if (username !== "") {
+			window.location = "<<approot>>/-/dashboard";
+			//autoload( "GET", "<<approot>>/-/dashboard?_autoloader_=1" );
+		} else {
+			login_start();
+		}
+	}
+	function logout() {
+
+	}
 	function login_start() {
 		openDialog( "siteheader_login_form" );
 		$n('login_username').value = "";
@@ -322,6 +381,7 @@ svg {
 	}
 	function login_close( info ) {
 		closeDialog();
+		username = info.username;
 		$n('siteheader_bar_username').innerHTML = info.username;
 		$n('siteheader_bar_nouser').style.display = "none";
 		$n('siteheader_bar_username').style.display = "inline";

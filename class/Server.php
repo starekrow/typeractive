@@ -207,30 +207,52 @@ class Server
 
 	/*
 	=====================
-	HandleRequest
+	RequestHandler
 	=====================
 	*/
-	function HandleRequest()
+	function RequestHandler()
 	{
 		return "Nothing to serve";
 	}
 
 	/*
 	=====================
-	Respond
+	SetupRequest
 	=====================
 	*/
-	function Respond( $request )
+	public function SetupRequest( $request )
 	{
 		$r = new Dict( $request );
 		$this->path = isset( $r->path ) ? $r->path : "";
 		$this->args = new Dict( $r->args );
 		$this->headers = new Dict( $r->headers );
-		$got = $this->HandleRequest();
+	}
+
+	/*
+	=====================
+	GetResponse
+	=====================
+	*/
+	public function GetResponse()
+	{
+		$got = $this->RequestHandler();
 		if (!$this->didReply) {
 			$this->Reply( $got );
 		}
 		return $got;
 	}
-	
+
+	/*
+	=====================
+	Handle
+	=====================
+	*/
+	public static function Handle( $req )
+	{
+		$cn = get_called_class();
+		$inst = new $cn();
+		$inst->SetupRequest( $req );
+		return $inst->GetResponse();
+	}
+
 }

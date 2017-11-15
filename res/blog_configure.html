@@ -1,0 +1,80 @@
+<style type="text/css">
+
+.dashboard {
+	width: 80%;
+	max-width: 1000;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+
+.signout {
+	text-align: right;
+	display: inline-block;
+	width: 100%;
+}
+
+
+.dashboard h2, .dashboard h3 {
+	text-align: center;
+}
+
+.module {
+	border-radius: 5px;
+	background-color: #e8e4e1;
+	display: inline-block;
+	/* min-width: 250px; */
+	min-height: 250px;
+	min-width: 45%;
+	margin-bottom: 10px;
+	vertical-align: top;
+}
+.module h1 {
+	text-align: center;
+	font-size: 1.3em;
+	font-weight: normal;
+	font-style: none;
+}
+.profile table {
+	width: 80%; margin-left: 10%;
+}
+.profile th {
+	text-align: right;
+}
+
+@media all and (max-width:600px) {
+	.dashboard {
+		width: 95%;
+	}
+	.module {
+		width: 95%;
+	}
+}
+
+</style>
+
+<h2>Configure Blog</h2>
+
+<form class=config action="<<approot>>/-/blog/configure" use-autoloader=1 method=POST>
+	<div class=field>
+		<label for=rootpost>Main Post:</label>
+		<input id=rootpost name=rootpost type=text value="<<rootpost>>">
+	</div>
+	<div class=field>
+		<label for=title title="Appears in browser tabs. No HTML.">Title:</label>
+		<input id=title name=title type=text value="<<title>>">
+	</div>
+	<div class=field>
+		<label for=header title="Appears above all blog posts">Blog Header:</label>
+		<textarea id=header name=title><<header>></textarea>
+	</div>
+	<div class=field>
+		<label for=bio title="">Biography:</label>
+		<textarea id=bio name=bio><<bio>></textarea>
+	</div>
+
+	<button type=submit>
+		Update
+	</button>
+</form>
+

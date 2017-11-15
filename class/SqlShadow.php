@@ -332,6 +332,45 @@ class SqlShadow implements
 
 	/*
 	=====================
+	Find
+	=====================
+	*/
+	public function Find( $fields = null )
+	{
+		$ai = $this->def->autoindex;
+		if ($fields === null) {
+			$fields = $this->data;
+		}
+		if (is_string( $index ) && $ai) {
+			$index = [ "$ai" => $index ];
+			$sql = $this->GetAutoIndexLoadSql();
+		} else if (is_array( $index ) || is_object( $index )) {
+			$index = (array)$index;
+			if (isset( $index[ $ai ])) {
+				$index = [ "$ai" => $index[ $ai ] ];
+				$sql = $this->GetAutoIndexLoadSql();
+			} else {
+//				$index = $this->GetIndexKeys( $index );
+				$sql = $this->CalcLoadSql( $index );
+			}
+		}
+		if (!$index || !$sql) {
+			return false;
+		}
+		$db = Sql::AutoConnect();
+		$got = $db->query( $sql, $index );
+		if (!$got) {
+			return false;
+		}
+		$vals = [];
+		foreach ($got as $row) {
+			$vals[] = new SqlShadow( $this->table, $row );
+		}
+		return $vals;
+	}
+
+	/*
+	=====================
 	FillDefaults
 	=====================
 	*/

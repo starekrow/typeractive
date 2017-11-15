@@ -28,16 +28,24 @@ class LoginServer extends AjaxServer
 
 	/*
 	=====================
-	HandleRequest
+	RequestHandler
 	=====================
 	*/
-	public function HandleRequest()
+	public function RequestHandler()
 	{
+		$args = $this->args;
+		if ($args->logout) {
+			session_start();
+			session_unset();
+			session_destroy();
+			return [
+				 "run" => 'alert("You have been signed out."); window.location = "/";'
+			];
+		}
 		if (Http::$method !== "POST") {
 			Http::MethodNotAllowed();
 			return $this->ShowError( "Login form submission error" );
 		}
-		$args = $this->args;
 		if ($args->password === null || $args->username === null) {
 			return $this->ShowError( "Login form submission error" );
 		}
@@ -48,6 +56,10 @@ class LoginServer extends AjaxServer
 		if (!$user->CheckPassword( $args->password )) {
 			return $this->ShowError( "Incorrect password" );
 		}
+		session_start();
+		$_SESSION['userid'] = $user->id;
+		$_SESSION['username'] = $user->GetName();
+
 		$info = [
 			 "username" => $user->GetName()
 			,"id" => $user->id
