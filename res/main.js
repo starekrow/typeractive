@@ -16,6 +16,59 @@ function wait( ms ) {
 
 function watchdog( ms ) { /* TODO */ }
 
+
+/*
+=====================
+copy
+=====================
+*/
+function copy( thing, depth )
+{
+    // Handle the 3 simple types, and null or undefined
+    if (null === thing || "object" != typeof thing) return thing;
+
+    if (depth && depth !== true) {
+    	--depth;
+    }
+
+    // Handle Array
+    if (thing instanceof Array) {
+        if (!depth) {
+        	return thing.slice( 0 );
+        }
+        let res = [];
+        for (let i = 0, len = thing.length; i < len; i++) {
+            res[i] = copy( thing[i], depth );
+        }
+        return res;
+    }
+
+    // Handle Date
+    if (thing instanceof Date) {
+    	return new Date(+thing);
+    }
+
+    // Handle "simple" objects
+    if (thing instanceof Object) {
+        let res = {};
+        if (!depth) {
+	        for (let attr in thing) {
+	            if (thing.hasOwnProperty(attr))  res[attr] = thing[attr];
+	        }
+        } else {
+	        for (let attr in thing) {
+	            if (thing.hasOwnProperty(attr)) {
+	            	res[attr] = copy( thing[attr], depth );
+	            }
+	        }
+        }
+        return res;
+    }
+
+    // Fallback is to assume that the item is not a container.
+    return thing;
+}
+
 function loadText( method, url, data )
 {
 	return new Promise( function( res, rej ) {

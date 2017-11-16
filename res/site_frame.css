@@ -13,8 +13,8 @@ body {
 	width: 100%;
 	margin: 0;
 	padding: 0;
-	color: #444;
-	background-color: #f3efe9;
+	color: <<defaultfg>>;
+	background-color: <<defaultbg>>;
 	font-family: Verdana,Geneva,sans-serif;
 	/* font-family: Candara,Calibri,Segoe,Segoe UI,Optima,Arial,sans-serif; */
 }
@@ -43,8 +43,8 @@ button, a.button {
 	border-radius: 5px;
 	border: 1px solid #aaa;
 	margin-bottom: 15px;
-	background-color: #d4c9b9;
-	color: #444;
+	background-color: <<buttonbg>>;
+	color: <<buttonfg>>;
 	min-width: 150px;
 	cursor: pointer;
 }
@@ -56,7 +56,7 @@ a.button {
 }
 
 a.button:visited {
-	color: #444;	
+	color: <<buttonfg>>;	
 }
 
 button.compact, a.button.compact {
@@ -80,20 +80,20 @@ input {
 	font-size: 18px;
 	padding: 5px 10px;
 	border-radius: 5px;
-	border: 1px solid #444;
+	border: 1px solid <<defaultfg>>;
 	margin-bottom: 15px;
 	background-color: #fff;
-	color: #444;
+	color: <<defaultfg>>;
 }
 
 textarea {
 	font-size: 18px;
 	 padding: 5px 10px; 
 	border-radius: 5px;
-	border: 1px solid #444;
+	border: 1px solid <<defaultfg>>;
 	margin-bottom: 15px;
 	background-color: #fff;
-	color: #444;
+	color: <<defaultfg>>;
 }
 
 .loadermask {

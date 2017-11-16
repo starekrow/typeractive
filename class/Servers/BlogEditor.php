@@ -14,6 +14,7 @@ Creates drafts, edits pages and works with the history
 
 class BlogEditor extends PageServer
 {
+	public $blog;
 	/*
 	=====================
 	NeedToSignIn
@@ -37,12 +38,16 @@ class BlogEditor extends PageServer
 	*/
 	function GetBlog()
 	{
+		if ($this->blog) {
+			return $this->blog;
+		}
 		$u = UserData::Load( $_SESSION['userid'] );
 		$b = $u->GetBlog();
 		if (!$b) {
 			$b = BlogData::Create( $u->id );
 			$b->Save();
 		}
+		$this->blog = $b;
 		return $b;
 	}
 
@@ -95,34 +100,40 @@ class BlogEditor extends PageServer
 	*/
 	function NewDraft()
 	{
-		if ($this->method != "POST") {
-			$this->html = file_get_contents( "res/blog_draft.html" );
-			$b = $this->GetBlog();
-			$this->tokens->screen_title = "New Post";
-			$this->tokens->title = "";
-			$this->tokens->text = "";
-			$this->tokens->dateline = "";
-			return;
-		}
+		$b = $this->GetBlog();
+		$this->html = file_get_contents( "res/blog_draft.html" );
+		$this->tokens->screen_title = "New Post";
+		$this->tokens->title = "";
+		$this->tokens->text = "";
+		$this->tokens->dateline = "";
+		$this->tokens->postid = "new";
+	}
+
+	/*
+	=====================
+	CreatePostWithText
+	=====================
+	*/
+	function CreatePostWithText()
+	{
+		$b = $this->GetBlog();
 		$args = $this->args;
 		$err = null;
 		if ($args->title === null || $args->text === null) {
-			$err = "Invalid parameters";
+			$this->ReplyJson( [
+				"alert" => "Invalid Parameters"
+			] );
 		} else {
-			$b = $this->GetBlog();
-			$b->CreateDraft( [
+			$post = $b->CreateDraft( [
 				 "title" => $args->title
 				,"text" => $args->text
 			] );
-		}
-		if ($err) {
 			$this->ReplyJson( [
-				"alert" => "Error during update: $err."
-			] );
-		} else {
-			$this->ReplyJson( [
-				"alert" => "Created new draft."
-				,"goto" => "-/dashboard"
+				 "alert" => "Created new draft."
+				,"run" => 
+					"assign_post_id(\"" . $post->id . "\");" .
+					"unmask_post_tools();"
+				//,"goto" => "-/dashboard"
 			] );
 		}
 	}
@@ -136,6 +147,10 @@ class BlogEditor extends PageServer
 	function EditPost()
 	{
 		$b = $this->GetBlog();
+
+		if ($this->args->post == "new") {
+			return $this->CreatePostWithText();
+		}
 		$p = PostData::Load( $this->args->post );
 		if (!$p || $p->GetAuthor() != $b->GetAuthor()) {
 			$this->html = "Invalid post ID";
@@ -151,6 +166,7 @@ class BlogEditor extends PageServer
 			$this->tokens->postid = $this->args->post;
 			return;
 		}
+
 		$args = $this->args;
 		$err = null;
 		$p->SetDraft( $args->text );
@@ -158,25 +174,14 @@ class BlogEditor extends PageServer
 		$p->SetDateline( $args->dateline );
 		$p->Save();
 
-		$this->html = "OK";
-		return;
-		if ($args->title === null || $args->text === null) {
-			$err = "Invalid parameters";
-		} else {
-			$b = $this->GetBlog();
-			$b->CreateDraft( [
-				 "title" => $args->title
-				,"text" => $args->text
-			] );
-		}
 		if ($err) {
 			$this->ReplyJson( [
 				"alert" => "Error during update: $err."
 			] );
 		} else {
 			$this->ReplyJson( [
-				"alert" => "Created new draft."
-				,"goto" => "-/dashboard"
+				 "alert" => "Saved."
+				,"run" => "unmask_post_tools();"
 			] );
 		}
 	}

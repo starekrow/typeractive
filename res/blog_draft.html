@@ -21,8 +21,10 @@
 	text-align: center;
 }
 
-.zconfig label.area {
-	vertical-align: top;
+.vspacer {
+	display: inline-block;
+	width: 100%;
+	height: 1em;
 }
 
 .config input {
@@ -35,7 +37,7 @@
 }
 
 .config textarea {
-	font-family: hack,Consolas,monaco,monospace;
+	font-family: <<monofonts>>;
 	vertical-align: top;
 	width: 99%;
 	height: 70vh;
@@ -64,7 +66,90 @@
 	margin-bottom: 20px;
 }
 
+.posttools {
+	position: relative;
+	text-align: center;
+}
+.posttools .mask {
+	display: none;
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	height: 100%;
+	width: 100%;
+	background-color: <<defaultbg>>;
+	opacity: 0.4;
+}
+.posttools.masked .mask {
+	display: block;
+}
+
 </style>
+
+<script type="text/javascript">
+	function mask_post_tools()
+	{
+		$n('posttools').classList.add( "masked" );			
+	}
+	function unmask_post_tools()
+	{
+		$n('posttools').classList.remove( "masked" );
+		setup_field_handlers();
+	}
+	function assign_post_id( id )
+	{
+		$n("editpostform").elements["post"] = id;
+	}
+	function field_changed(ev)
+	{ 
+		mask_post_tools();
+		setup_field_handlers( false );
+	}
+	function field_keypress(ev)
+	{
+		mask_post_tools(); 
+		setup_field_handlers( false );
+	}
+	function field_keydown(ev)
+	{
+		var key = ev.which || ev.keyCode || 0;
+		if (key == 8 || key == 46 ||
+			(ev.target.tagName == "TEXTAREA" && key == 13)) {
+			mask_post_tools();
+			setup_field_handlers( false );
+		}
+	}
+	function setup_field_handlers( flag ) {
+		if (!$n("title")) {
+			wait(1).then( function() {
+				setup_field_handlers( flag );
+			} );
+			return;
+		}
+		var watch = [ "title", "dateline", "text" ];
+		if (flag !== false) {
+			for (let k in watch) {
+				let n = $n( watch[k] );
+				n.addEventListener( 'change',  field_changed );
+				n.addEventListener( 'cut',  field_changed );
+				n.addEventListener( 'paste',  field_changed );
+				n.addEventListener( 'keypress', field_keypress );
+				n.addEventListener( 'keydown', field_keydown );
+			}
+
+		} else {
+			for (let k in watch) {
+				let n = $n( watch[k] );
+				n.removeEventListener( 'change',  field_changed );
+				n.removeEventListener( 'cut',  field_changed );
+				n.removeEventListener( 'paste',  field_changed );
+				n.removeEventListener( 'keypress', field_keypress );
+				n.removeEventListener( 'keydown', field_keydown );
+			}
+		}
+	}
+	setup_field_handlers();
+</script>
 
 <a class="backbtn compact button" href="<<backlink>>" onclick="history.go(-1);return false;">
 	<svg class=glyph><use xlink:href="#svg-arrow-left"></use></svg>Back
@@ -89,8 +174,16 @@
 	<button type=submit>
 		Save
 	</button>
-	<div class=note>
-		Note: Preview and publish options are available after saving
-	</div>
 </form>
 
+<div id=posttools class="posttools <<mask_post_tools?>>">
+	<a class=button href="-/blog/preview?post=<<postid>>">Preview</a>
+	<a class=button href="-/blog/publish?post=<<postid>>">Publish</a>
+	<a class=button href="-/blog/delete?post=<<postid>>">Delete</a>
+	<div class=mask></div>
+</div>
+
+<a class="backbtn compact button" href="<<backlink>>" onclick="history.go(-1);return false;">
+	<svg class=glyph><use xlink:href="#svg-arrow-left"></use></svg>Back
+</a>
+<div class=vspacer style="height:2em"></div>

@@ -13,15 +13,34 @@ Main request distributor.
 namespace Typeractive;
 
 date_default_timezone_set( "UTC" );
-spl_autoload_register( function( $name ) {
-	//error_log( "autoload $name" );
-	if (substr( $name, 0, 12 ) == 'Typeractive\\' ) {
-		$name = substr( $name, 12 );
-		include( "class/$name.php" );
-	} else {
-		include( "lib/$name.php" );
+
+class ClassLoader
+{
+	static $map = [
+		"Typeractive\\BlogEditor" => "class/Servers/BlogEditor.php"
+	];
+	static function Load( $name ) {
+		//error_log( "autoload $name" );
+		if (!empty( self::$map[ $name ] )) {
+			include( self::$map[ $name ] );
+			return;
+		}
+		if (substr( $name, 0, 12 ) == 'Typeractive\\' ) {
+			$name = substr( $name, 12 );
+			if (!@include( "class/$name.php" )) {
+				if (substr( $name, -4 ) == "Data") {
+					//$name = substr( $name, 0, strlen($name)-4 );
+					include( "class/Data/$name.php" );
+				} else if (substr( $name, -6 ) == "Server") {
+					include( "class/Servers/$name.php" );
+				}
+			}
+		} else {
+			include( "lib/$name.php" );
+		}
 	}
-} );
+}
+spl_autoload_register( "Typeractive\\ClassLoader::Load" );
 
 require_once( "glib.php" );
 

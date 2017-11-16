@@ -32,6 +32,12 @@ class BlogServer extends PageServer
 		$md = new \Parsedown();
 		$toks = new Dict();
 
+		if (isset($_SESSION['userid']) && 
+			$_SESSION['userid'] == $post->GetAuthor()
+		   ) {
+			$toks->show_post_tools = "show";
+		}
+
 		$pdate = date( "D M d, Y", $date );
 		$dl = $post->GetDateline();
 		if ($dl !== "") {
@@ -40,6 +46,7 @@ class BlogServer extends PageServer
 			$dl = $pdate;
 		}
 		
+		$toks->postid = $post->id;
 		$toks->dateline = $dl;
 		$toks->mainpost = $md->text( $text );
 		$toks->bio = $md->text( $blog->GetBiography() );

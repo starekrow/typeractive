@@ -97,30 +97,29 @@ class PageServer extends Server
 		echo "<base href=\"" . Http::$appRootUrl . "/\">";
 		
 		echo "<style type=\"text/css\">";
-		readfile( "res/site_frame.css" );
+		$this->ReadFileWithTokens( "res/site_frame.css" );
 		echo "</style>";
 
 		echo "<style id=pagecss type=\"text/css\">";
 		if ($this->css) {
-			echo $this->css;
+			echo $this->ReplaceAngTokens( $this->css, $this->tokens );
 		}
 		echo "</style>";
 
 		echo "<script type=\"text/javascript\">";
-		readfile( "res/main.js" );
+		$this->ReadFileWithTokens( "res/main.js" );
 		echo "</script>";
 
 		if ($this->script) {
 			echo "<script type=\"text/javascript\">";
-			echo $this->script;
+			echo $this->ReplaceAngTokens( $this->script, $this->tokens );
 			echo "</script>";
 		}
 
 		echo "</head><body>";
 
-		$login = !empty( $_SESSION['userid'] );
 		$this->ReadFileWithTokens( "res/site_header.html" );
-		readfile( "res/ext_dialog.html" );
+		$this->ReadFileWithTokens( "res/ext_dialog.html" );
 
 		echo "<div id=loadermask class=loadermask><div class=mask></div>";
 		echo "<table><tr><td>Loading...</td></tr></table></div>";
@@ -181,6 +180,11 @@ class PageServer extends Server
 
 		$this->tokens->approot = Http::$appRootUrl;
 		$this->tokens->backlink = Http::$referrer;
+		$this->tokens->defaultfg = "#444444";
+		$this->tokens->defaultbg = "#f3efe9";
+		$this->tokens->buttonfg = $this->tokens->defaultfg;
+		$this->tokens->buttonbg = "#d4c9b9";
+		$this->tokens->monofonts = "hack,Consolas,monaco,monospace";
 		$this->SetupSessionTokens();
 
 		$this->title = "MetalCoder";

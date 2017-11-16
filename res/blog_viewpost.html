@@ -70,6 +70,14 @@
 	text-align: left;
 }
 
+.posttools {
+	display: none;
+	margin: 2em 2em;
+	text-align: center;
+}
+.posttools.show {
+	display: block;	
+}
 
 @media all and (max-width:700px) {	
 	.col1 {
@@ -111,6 +119,13 @@
 		<<header>>
 	</div>
 
+	<div class="posttools <<show_post_tools?>>">
+		<a class=button href="-/blog/edit?post=<<postid>>">Edit</a>
+		<a class=button href="-/blog/publish?post=<<postid>>">Publish</a>
+		<a class=button href="-/blog/delete?post=<<postid>>">Delete</a>
+		<div class=mask></div>
+	</div>
+
 	<div class=col1>
 		<div class=blog>
 			<div class=title>
@@ -130,4 +145,11 @@
 			<<bio>>
 		</div>
 	</div>
+	<div class="posttools <<show_post_tools?>>">
+		<a class=button href="-/blog/edit?post=<<postid>>">Edit</a>
+		<a class=button href="-/blog/publish?post=<<postid>>">Publish</a>
+		<a class=button href="-/blog/delete?post=<<postid>>">Delete</a>
+		<div class=mask></div>
+	</div>
+
 </div>
