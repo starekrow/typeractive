@@ -16,16 +16,39 @@ class BlogServer extends PageServer
 {
 	/*
 	=====================
-	NeedToSignIn
+	RenderPost
 	=====================
 	*/
-	function NeedToSignIn()
+	static function RenderPost( $blog, $post, $options = null )
 	{
-		$this->html = [
-			 '<div style="margin-top:100px">'
-			,'You must <a href="#signin" onclick="login_start()">sign in</a> to view your dashboard.'
-			,'</div>'
-		];
+		$options = new Dict( $options );
+		if ($options->draft) {
+			$text = $post->GetDraft();
+			$date = $post->GetDraftTimestamp();
+		} else {
+			$text = $post->GetText();
+			$date = $post->GetPostTimestamp();
+		}
+		$md = new \Parsedown();
+		$toks = new Dict();
+
+		$pdate = date( "D M d, Y", $date );
+		$dl = $post->GetDateline();
+		if ($dl !== "") {
+			$dl = "$pdate - $dl";
+		} else {
+			$dl = $pdate;
+		}
+		
+		$toks->dateline = $dl;
+		$toks->mainpost = $md->text( $text );
+		$toks->bio = $md->text( $blog->GetBiography() );
+		$toks->header = $blog->GetHeader();
+		$toks->title = $post->GetTitle();
+		return new Dict( [
+			 "tokens" => $toks
+			,"html" => file_get_contents( "res/blog_viewpost.html" )
+		] );
 	}
 
 	/*

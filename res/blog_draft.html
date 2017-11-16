@@ -9,7 +9,7 @@
 }
 
 .config .field {
-	text-align: left;
+	text-align: center;
 }
 
 .config h2, .config h3 {
@@ -17,10 +17,8 @@
 }
 .config label {
 	display: inline-block;
-	width: 24%;
-	text-align: right;
-	border-right: 1px solid #888;
-	padding-right: 5px;
+	width: 99%;
+	text-align: center;
 }
 
 .zconfig label.area {
@@ -33,35 +31,24 @@
 }
 
 .config input.large {
-	width: 74%;
+	width: 99%;
 }
 
 .config textarea {
+	font-family: hack,Consolas,monaco,monospace;
 	vertical-align: top;
-	width: 74%;
+	width: 99%;
+	height: 70vh;
 	min-height: 10em;
 	text-align: left;
 	font-size: 16px;
+	overflow-y: scroll;
+	overflow-scrolling: touch;
 }
 
 @media all and (max-width:600px) {
 	.config {
 		width: 95%;
-	}
-	.config label {
-		width: 100%;
-		text-align: center;
-		border-right: none;
-		padding-right: 0;
-	}
-	.config input.large {
-		width: 100%;
-	}
-	.config textarea {
-		width: 100%;
-	}
-	.config .field {
-		text-align: center;
 	}
 }
 
@@ -70,33 +57,40 @@
 	margin-left: 20px;
 }
 
+.note {
+	font-style: italic;
+	margin-top: 15px;
+	text-align: center;
+	margin-bottom: 20px;
+}
+
 </style>
 
 <a class="backbtn compact button" href="<<backlink>>" onclick="history.go(-1);return false;">
 	<svg class=glyph><use xlink:href="#svg-arrow-left"></use></svg>Back
 </a>
 
-<form class=config action="-/blog/configure" use-autoloader=1 method=POST>
-	<h2>Configure Blog</h2>
+<form class=config action="-/blog/edit" use-autoloader=1 method=POST>
+	<h2><<screen_title>></h2>
+	<input name=post type=hidden value="<<postid>>">
 	<div class=field>
-		<label for=rootpost>Main Post</label>
-		<input class=small id=rootpost name=rootpost type=text value="<<rootpost>>">
-	</div>
-	<div class=field>
-		<label for=title title="Appears in browser tabs. No HTML.">Title</label>
+		<label for=title>Post Title</label>
 		<input class=large id=title name=title type=text value="<<title>>">
 	</div>
 	<div class=field>
-		<label for=header title="Appears above all blog posts">Blog Header</label>
-		<textarea id=header name=header><<header>></textarea>
+		<label for=dateline>Dateline</label>
+		<input class=large id=dateline name=dateline type=text value="<<dateline>>">
 	</div>
 	<div class=field>
-		<label for=bio title="">Biography</label>
-		<textarea id=bio name=bio><<bio>></textarea>
+		<label for=text>Post</label>
+		<textarea id=text name=text><<text>></textarea>
 	</div>
 
 	<button type=submit>
-		Update
+		Save
 	</button>
+	<div class=note>
+		Note: Preview and publish options are available after saving
+	</div>
 </form>
 

@@ -12,6 +12,7 @@ Main request distributor.
 
 namespace Typeractive;
 
+date_default_timezone_set( "UTC" );
 spl_autoload_register( function( $name ) {
 	//error_log( "autoload $name" );
 	if (substr( $name, 0, 12 ) == 'Typeractive\\' ) {

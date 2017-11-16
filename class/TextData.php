@@ -44,8 +44,47 @@ class TextData
 			,"ctimestamp" => $r->ParseDateTime( $r->ctime )
 			,"mtimestamp" => $r->ParseDateTime( $r->mtime )
 			,"type" => $r->type
+			,"text" => $r->text
 		];
 	}
+
+	/*
+	=====================
+	GetText
+	=====================
+	*/
+	public function GetText()
+	{
+		return $this->record->text;
+	}
+
+
+	/*
+	=====================
+	SetEditor
+
+	Replaces the text in the record. No history is kept of the change.
+	=====================
+	*/
+	public function SetEditor( $editorid )
+	{
+		$this->record->editorid = $editorid;
+	}
+
+
+	/*
+	=====================
+	SetText
+
+	Replaces the text in the record. No history is kept of the change.
+	=====================
+	*/
+	public function SetText( $newtext )
+	{
+		$this->record->text = $newtext;
+		$this->record->mtime = $this->record->DateTime( microtime( true ) );
+	}
+
 
 	/*
 	=====================
@@ -63,7 +102,7 @@ class TextData
 		$p = $prev->record;
 		$p->historyid = $r->textid;
 		$p->ctime = $r->mtime;
-		$r->mtime = date("Y-m-d H:i:s", microtime( true ));
+		$r->mtime = $r->DateTime( microtime( true ) );
 		$p->mtime = $r->mtime;
 		$p->editor = $r->editor;
 		$r->editor = $updater;
@@ -86,37 +125,59 @@ class TextData
 
 	/*
 	=====================
+	SetType
+	=====================
+	*/
+	public function SetType( $type )
+	{
+		$this->record->type = $type;
+	}
+
+	/*
+	=====================
+	Save
+	=====================
+	*/
+	public function Save()
+	{
+		$this->record->Flush();
+	}
+
+	/*
+	=====================
 	Create
 
 	Creates new text.
 	Returns a TextRecord, or false if the creation failed
 	=====================
 	*/
-	public static function Create( $text = null, $authorid = null )
+	public static function Create( $text = null, $type = null, $authorid = null )
 	{
 		$rec = new SqlShadow( "text" );
-		$rec->ctime = microtime( true );
+		$rec->ctime = $rec->DateTime( microtime( true ) );
+		$rec->mtime = $rec->ctime;
 		$rec->text = $text;
+		$rec->type = $type;
 		$rec->authorid = $authorid;
 		if (!$rec->Flush()) {
 			throw new \Exception( "unable to create text" );
 		}
-		return new TextRecord( $rec );
+		return new TextData( $rec );
 	}
 
 	/*
 	=====================
-	Open
+	Load
 
 	Gets a TextRecord instance for the given id.
 	=====================
 	*/
-	public static function Open( $textid )
+	public static function Load( $textid )
 	{
 		$rec = new SqlShadow( "text", [ "textid" => $textid ] );
 		if (!$rec->Load()) {
 			throw new \Exception( "unable to load blog $textid" );
 		}
-		return new TextRecord( $rec );
+		return new TextData( $rec );
 	}
 }

@@ -37,15 +37,39 @@ table tr {
 }
 
 
-button {
+button, a.button {
 	font-size: 18px;
 	padding: 10px 15px;
 	border-radius: 5px;
-	border: 1px solid #444;
+	border: 1px solid #aaa;
 	margin-bottom: 15px;
 	background-color: #d4c9b9;
 	color: #444;
 	min-width: 150px;
+	cursor: pointer;
+}
+
+a.button {
+	text-decoration: none;
+	display: inline-block;
+	text-align: center;
+}
+
+a.button:visited {
+	color: #444;	
+}
+
+button.compact, a.button.compact {
+	padding: 3px 8px;
+	min-width: 110px;
+	margin-bottom: 0;
+}
+
+
+svg.glyph {
+	width: 1.3em;
+	height: 1.3em;
+	vertical-align: middle;
 }
 
 label {

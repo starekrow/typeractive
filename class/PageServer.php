@@ -86,13 +86,15 @@ class PageServer extends Server
 		echo "<!DOCTYPE html>";
 		echo "<html><head>";
 
+		echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
+
 		echo "<title>";
 		if (isset( $this->title )) {
 			echo htmlspecialchars( $this->title );
 		}
 		echo "</title>";
 
-		echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
+		echo "<base href=\"" . Http::$appRootUrl . "/\">";
 		
 		echo "<style type=\"text/css\">";
 		readfile( "res/site_frame.css" );
@@ -178,11 +180,16 @@ class PageServer extends Server
 		$this->tokens = new Dict();
 
 		$this->tokens->approot = Http::$appRootUrl;
+		$this->tokens->backlink = Http::$referrer;
 		$this->SetupSessionTokens();
 
 		$this->title = "MetalCoder";
 
 		$this->GetPage();
+
+		if ($this->didReply) {
+			return;
+		}
 
 		if ($this->args->_autoloader_) {
 			$html = $this->GetHtml();

@@ -23,7 +23,7 @@ class DashboardServer extends PageServer
 	{
 		$this->html = [
 			 '<div style="margin-top:100px">'
-			,'You must <a href="#signin" onclick="login_start()">sign in</a> to view your dashboard.'
+			,'You must <a href="#signin" onclick="login_start();return false;">sign in</a> to view your dashboard.'
 			,'</div>'
 		];
 	}

@@ -82,9 +82,9 @@ class SqlShadow implements
 	Given a timestamp, returns a suitable DATETIME value
 	=====================
 	*/
-	public function DateTime( $val )
+	public function DateTime( $val = null )
 	{
-		return date("Y-m-d H:i:s", $val );
+		return date("Y-m-d H:i:s", $val !== null ? $val : time() );
 	}
 
 
@@ -335,30 +335,30 @@ class SqlShadow implements
 	Find
 	=====================
 	*/
-	public function Find( $fields = null )
+	public function Find( $fields = null, $options = null )
 	{
 		$ai = $this->def->autoindex;
 		if ($fields === null) {
 			$fields = $this->data;
 		}
-		if (is_string( $index ) && $ai) {
-			$index = [ "$ai" => $index ];
+		if (is_string( $fields ) && $ai) {
+			$fields = [ "$ai" => $fields ];
 			$sql = $this->GetAutoIndexLoadSql();
-		} else if (is_array( $index ) || is_object( $index )) {
-			$index = (array)$index;
-			if (isset( $index[ $ai ])) {
-				$index = [ "$ai" => $index[ $ai ] ];
+		} else if (is_array( $fields ) || is_object( $fields )) {
+			$fields = (array)$fields;
+			if (isset( $fields[ $ai ])) {
+				$fields = [ "$ai" => $fields[ $ai ] ];
 				$sql = $this->GetAutoIndexLoadSql();
 			} else {
-//				$index = $this->GetIndexKeys( $index );
-				$sql = $this->CalcLoadSql( $index );
+//				$fields = $this->GetIndexKeys( $fields );
+				$sql = $this->CalcLoadSql( $fields );
 			}
 		}
-		if (!$index || !$sql) {
+		if (!$fields || !$sql) {
 			return false;
 		}
 		$db = Sql::AutoConnect();
-		$got = $db->query( $sql, $index );
+		$got = $db->query( $sql, $fields );
 		if (!$got) {
 			return false;
 		}
@@ -411,10 +411,10 @@ class SqlShadow implements
 			$args = [ "$ai" => $this->data[ $ai ] ];
 			foreach ($d as $col => $v) {
 				if ($col == $ai || 
-					(!$this->allDirty && !$this->dirty[ $col ])) {
+					(!$this->allDirty && empty($this->dirty[ $col ]))) {
 					continue;
 				}
-				$qcol = $d->QuoteName( $col );
+				$qcol = $db->QuoteName( $col );
 				$args[ $col ] = $v;
 				$sql .= "$stitch$qcol=:$col";
 				$stitch = ",";

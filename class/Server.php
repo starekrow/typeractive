@@ -22,6 +22,7 @@ class Server
 	protected $path;
 	protected $args;
 	protected $headers;
+	protected $method;
 
 	protected $didReply;
 	protected $replyType;
@@ -226,6 +227,7 @@ class Server
 		$this->path = isset( $r->path ) ? $r->path : "";
 		$this->args = new Dict( $r->args );
 		$this->headers = new Dict( $r->headers );
+		$this->method = isset( $r->method ) ? $r->method : Http::$method;
 	}
 
 	/*

@@ -16,6 +16,7 @@ svg {
 	background-color: #444;
 	color: #f0f0f0;
 	vertical-align: baseline;
+	z-index: 100;
 }
 
 #siteheader_bar_spacer {
@@ -96,12 +97,14 @@ svg {
 	float: left;
 	width: 45px;
 	height: 45px;
+	z-index: 100;
 }
 
 #siteheader_compact_account_spacer {
 	float: right;
 	width: 45px;
 	height: 45px;
+	z-index: 100;
 }
 
 
@@ -324,7 +327,7 @@ svg {
 <div style="display:none">
 
 	<!-- login dialog/form -->
-	<form id=siteheader_login_form action="<<approot>>/-/login" method=POST>
+	<form id=siteheader_login_form action="-/login" use-autoloader=1 method=POST>
 		<div class=dialog_title>MetalCoder</div>
 		<div class=dialog_subtitle>Sign In</div>
 		<div class=fields>
@@ -348,7 +351,7 @@ svg {
 	</form>
 
 	<!-- logout dialog -->
-	<form id=siteheader_logout_form action="<<approot>>/-/login" method=POST>
+	<form id=siteheader_logout_form action="-/login" method=POST>
 		<input name=logout value=1 type=hidden>
 	</form>
 
@@ -358,7 +361,7 @@ svg {
 	var username = "<<username>>";
 	function click_account() {
 		if (username !== "") {
-			window.location = "<<approot>>/-/dashboard";
+			window.location = "-/dashboard";
 			//autoload( "GET", "<<approot>>/-/dashboard?_autoloader_=1" );
 		} else {
 			login_start();
@@ -406,4 +409,15 @@ svg {
     	<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
 	    <path d="M0 0h24v24H0z" fill="none"/>
 	</symbol>
+
+	<symbol id="svg-arrow-left" viewBox="0 0 24 24">
+	    <path d="M15.41 16.09l-4.58-4.59 4.58-4.59L14 5.5l-6 6 6 6z"/>
+	    <path d="M0-.5h24v24H0z" fill="none"/>
+	</symbol>
+
+	<symbol id="svg-arrow-right" viewBox="0 0 24 24">
+	    <path d="M8.59 16.34l4.58-4.59-4.58-4.59L10 5.75l6 6-6 6z"/>
+	    <path d="M0-.25h24v24H0z" fill="none"/>
+	</symbol>
+
 </svg>

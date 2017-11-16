@@ -16,6 +16,8 @@ class BlogData
 {
 	public $id;
 	protected $record;
+	protected $text;
+
 
 	public static $tableDef = [
 		"autoindex" => "blogid"
@@ -30,6 +32,7 @@ class BlogData
 	{
 		$this->record = $record;
 		$this->id = $record->blogid;
+		$this->text = (object)[];
 	}
 
 	/*
@@ -80,15 +83,62 @@ class BlogData
 
 	/*
 	=====================
+	GetTextField
+	=====================
+	*/
+	protected function GetTextField( $field )
+	{
+		if (!empty( $this->text->$field )) {
+			return $this->text->$field->GetText();
+		}
+		if (!$this->record->$field) {
+			return "";
+		}
+		// TODO: safety checks
+		$t = TextData::Load( $this->record->$field );
+		$this->text->$field = $t;
+		return $t->GetText();
+	}
+
+	/*
+	=====================
+	SetTextField
+	=====================
+	*/
+	protected function SetTextField( $field, $text )
+	{
+		// TODO: safety checks?
+		if ($text == null) {
+			$text = "";
+		}
+		if (!$this->record->$field) {
+			$t = TextData::Create( 
+				$text, 
+				"v1:$field:markdown", 
+				$this->record->authorid 
+			);
+			$this->text->$field = $t;
+			$this->record->$field = $t->id;
+		} else {
+			// TODO: history
+			if (empty( $this->text->$field )) {
+				$this->GetTextField( $field );
+			}
+			$this->text->$field->SetText( $text );
+			$this->text->$field->Save();
+		}
+	}
+
+
+	/*
+	=====================
 	SetBiography
 	=====================
 	*/
 	public function SetBiography( $text )
 	{
-		// TODO: safety checks
-		$t = new TextRecord( $this->record->biotext );
-		$this->record->biotext = $t->textid;
-		$t->SetText( $text );
+		// TODO: safety checks?
+		$this->SetTextField( "biotext", $text );
 	}
 
 	/*
@@ -96,11 +146,10 @@ class BlogData
 	SetTitle
 	=====================
 	*/
-	public function SetTitle( $title )
+	public function SetTitle( $text )
 	{
-		$t = new TextRecord( $this->record->titletext );
-		$this->record->titletext = $t->textid;
-		$t->SetText( $text );
+		// TODO: safety checks?
+		$this->SetTextField( "titletext", $text );
 	}
 
 	/*
@@ -110,11 +159,66 @@ class BlogData
 	*/
 	public function SetHeader( $text )
 	{
-		// TODO: safety checks
-		$t = new TextRecord( $this->record->headertext );
-		$this->record->headertext = $t->textid;
-		$t->SetText( $text );
+		// TODO: safety checks?
+		$this->SetTextField( "headertext", $text );
 	}
+
+	/*
+	=====================
+	GetAuthor
+	=====================
+	*/
+	public function GetAuthor()
+	{
+		return $this->record->authorid;
+	}
+
+	/*
+	=====================
+	GetDefaultPost
+	=====================
+	*/
+	public function GetDefaultPost()
+	{
+		$rp = $this->record->rootpost;
+		if (!$rp) {
+			$rp = "*latest";
+		} else {
+			$rp = (string) $rp;
+		}
+		return $rp;
+	}
+
+	/*
+	=====================
+	GetBiography
+	=====================
+	*/
+	public function GetBiography()
+	{
+		return $this->GetTextField( "biotext" );
+	}
+
+	/*
+	=====================
+	GetTitle
+	=====================
+	*/
+	public function GetTitle()
+	{
+		return $this->GetTextField( "titletext" );
+	}
+
+	/*
+	=====================
+	GetHeader
+	=====================
+	*/
+	public function GetHeader()
+	{
+		return $this->GetTextField( "headertext" );
+	}
+
 
 	/*
 	=====================
@@ -123,7 +227,7 @@ class BlogData
 	*/
 	public function SetDefaultPost( $post )
 	{
-		if ($post === "latest") {
+		if ($post === "latest" || $post == "*latest") {
 			$post = null;
 		}
 		$this->record->rootpost = $post;
@@ -137,6 +241,37 @@ class BlogData
 	public function Save()
 	{
 		$this->record->Flush();
+	}
+
+	/*
+	=====================
+	ListPosts
+
+	Returns an array of posts (might be empty).
+	=====================
+	*/
+	public function ListPosts( $type = null )
+	{
+		return PostData::ListBlogPosts( $this->id, $type );
+	}
+
+	/*
+	=====================
+	CreateDraft
+
+	Returns a PostData for the draft.
+	=====================
+	*/
+	public function CreateDraft( $info )
+	{
+		$f = new Dict( $info );
+		//if ($f->text == "" && $f->title == "") {
+		//	throw new \Exception( "Refusing to create empty post" );
+		//}
+		$p = PostData::Create( $this->id, $this->record->authorid );
+		$p->SetDraft( $f->text );
+		$p->SetTitle( $f->title );
+		return $p;
 	}
 
 	/*
@@ -168,9 +303,10 @@ class BlogData
 	Returns an instantiated Blog instance.
 	=====================
 	*/
-	public static function Create()
+	public static function Create( $authorid = null )
 	{
 		$rec = new SqlShadow( "blogs" );
+		$rec->authorid = $authorid;
 		if (!$rec->Flush()) {
 			throw new \Exception( "unable to create blog" );
 		}

@@ -51,7 +51,7 @@ class UserData
 	*/
 	public function GetBlog()
 	{
-		$bl = BlogData::Find( [ "userid" => $this->id ] );
+		$bl = BlogData::Find( [ "authorid" => $this->id ] );
 		if (!$bl) {
 			return null;
 		}
@@ -143,7 +143,7 @@ class UserData
 		$ar->methodkey = self::NormalizeUsername( $name );
 		$user = false;
 		if ($ar->Load()) {
-			$user = self::Open( $ar->userid );
+			$user = self::Load( $ar->userid );
 		}
 		return $user;
 	}
@@ -163,7 +163,7 @@ class UserData
 		$ar->methodkey = self::NormalizeEmail( $email );
 		$user = false;
 		if ($ar->Load()) {
-			$user = self::Open( $ar->userid );			
+			$user = self::Load( $ar->userid );			
 		}
 		return $user;
 	}

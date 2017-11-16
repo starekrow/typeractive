@@ -57,7 +57,7 @@
 <h2>Dashboard</h2>
 
 <div class=signout>
-	<form action="<<approot>>/-/login" use-autoloader=1 method=POST>
+	<form action="-/login" use-autoloader=1 method=POST>
 		<input name=logout value=1 type=hidden>
 		<button type=submit>
 			Sign Out
@@ -67,21 +67,21 @@
 
 <div class=module>
 	<h1>Blog</h1>
-	<form action="<<approot>>/-/blog/new" method=GET>
-		<button type=submit>
-			New Post
-		</button>
-	</form>
-	<form action="<<approot>>/-/blog/configure" method=GET>
-		<button type=submit>
+
+	<div><a class=button href="-/blog/posts">
+			Posts
+	</a></div>
+	<div><a class=button href="-/blog/draft">
+			New Draft
+	</a></div>
+	<div><a class=button href="-/blog/configure">
 			Configure
-		</button>
-	</form>
+	</a></div>
 </div>
 
 <div class=module>
 	<h1>Pages</h1>
-	<form action="<<approot>>/-/page/create" method=GET>
+	<form action="-/page/create" method=GET>
 		<button type=submit>
 			New Page
 		</button>
