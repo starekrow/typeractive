@@ -13,6 +13,9 @@ create such an instance.
 * connect - establish access to a cache
 * setDefault - set the default instance
 
+There is also a static interface that uses the current default cache instance
+for common operations: get, set, setx, remove, wait, lock and unlock.
+
 ================================================================================
 */
 class Cache
@@ -69,6 +72,18 @@ class Cache
 	{
 		if (self::$cache) {
 			self::$cache->set( $key, $value, $ttl );
+		}
+	}
+
+	/*
+	=====================
+	setx
+	=====================
+	*/
+	public static function setx( $key, $value, $ttl = null )
+	{
+		if (self::$cache) {
+			self::$cache->setx( $key, $value, $ttl );
 		}
 	}
 

@@ -23,10 +23,9 @@ abstract class CacheDriver
 	connect
 
 	Connect to a cache instance.
-	Returns true if the connection succeeds (or may succeed in the future).
 
-	@return boolean `true` if the connection succeeds (or is thought likely
-	                to succeed).
+	@return  boolean  `true` if the connection succeeds (or is thought likely
+	                   to succeed). Otherwise `false`.
 	=====================
 	*/
 	public abstract function connect( $options = null );
@@ -34,7 +33,12 @@ abstract class CacheDriver
 	/*
 	=====================
 	getRaw
-	Looks up a key in the cache.  Return the key or `false` if not found.
+
+	Locates a value for the given key.
+
+	@param  string  $key  Key to check
+	@return  mixed  Value found for key, or `false` if value is missing or 
+	                expired
 	=====================
 	*/
 	protected abstract function getRaw( $key );
@@ -42,7 +46,16 @@ abstract class CacheDriver
 	/*
 	=====================
 	setRaw
-	Sets a key in the cache.
+
+	Associates a value and a time-to-live with a key. Replaces any existing 
+	value and time-to-live.
+
+	The value must be serializable by the cache driver in use.
+
+	@param  string  $key    Key to set
+	@param  mixed   $value  Value to assign
+	@param  number  $ttl    Seconds before value expires	
+	@return  void
 	=====================
 	*/
 	protected abstract function setRaw( $key, $value, $ttl );
@@ -50,8 +63,15 @@ abstract class CacheDriver
 	/*
 	=====================
 	setRawExclusive
-	Sets a key in the cache if it does not already exist. Returns `true` if the 
-	key was created, otherwise `false`.
+
+	Associates a value and a time-to-live with a key, but only if the key does 
+	not already have an unexpired value.
+
+	@param  string  $key    Key to set
+	@param  mixed   $value  Value to assign
+	@param  number  $ttl    Seconds before value expires	
+
+	@return  boolean  `true` if the value was set, otherwise `false`
 	=====================
 	*/
 	protected abstract function setRawExclusive( $key, $value, $ttl );
@@ -59,7 +79,12 @@ abstract class CacheDriver
 	/*
 	=====================
 	removeRaw
-	Remove or invalidate a key in the cache.
+
+	Removes or invalidates any value associated with the given key.
+
+	@param  string  $key    Key to remove
+
+	@return void
 	=====================
 	*/
 	protected abstract function removeRaw( $key );
@@ -67,7 +92,10 @@ abstract class CacheDriver
 	/*
 	=====================
 	removeAll
+
 	Remove all keys from the cache
+
+	@return void
 	=====================
 	*/
 	protected abstract function removeAll();
@@ -204,7 +232,7 @@ abstract class CacheDriver
 
 	@param string     $key         Cache key to load
 	@param number     $seconds     How long to wait for a value
-	@param number     $intervalms  Polling interval in milliseconds, or "auto"
+	@param mixed      $intervalms  Polling interval in milliseconds, or "auto"
 
 	@return mixed Cached value, or `false` if none found
 	=====================
@@ -243,6 +271,10 @@ abstract class CacheDriver
 	for stampede control and other pathological update conditions. The locks 
 	are stored in the cache, as the original key with a "-locks-:" prefix.
 
+	Note especially that the "locked" status of a key has no effect on whether
+	a `set` or `get` operation will succeed. It only affects whether a 
+	subsequent call (by this process or any other) to `lock` will succeed.
+
 	If $threshold is not `null`, the key will only be locked if it is within
 	$threshold seconds of expiring. If $threshold is 0, the item will only be
 	locked if it does not exist or has already expired.
@@ -275,16 +307,16 @@ abstract class CacheDriver
 
 
 	@param string   $key       Key to lock
-	@param mixed    $wait      How long to wait to acquire the lock
-	@param mixed    $value     Value found in key, or `false`
-	@param mixed    $threshold Lock if within this time of expiry
-	@param mixed    $limit     Lock for this long
+	@param number   $wait      Seconds to wait to acquire the lock
+	@param mixed    $value     (output) Value found for key, or `false`
+	@param mixed    $threshold Lock if within this many seconds of expiration
+	@param mixed    $limit     Time limit for lock
 
 	@return boolean Whether a lock was acquired
 
 	=====================
 	*/
-	public function lock( $key, $wait = null, &$value = null, 
+	public function lock( $key, $wait = 0, &$value = null, 
 		$threshold = null, $limit = null )
 	{
 		$key = (string)$key;
@@ -292,7 +324,7 @@ abstract class CacheDriver
 		if ($limit === null) {
 			$limit = self::DEFAULT_LOCK_LIMIT;
 		}
-		$until = $now + ($wait ? $wait : 0);
+		$until = $now + $wait;
 		$usdelay = 1000;		// start at 1ms
 		for (;;) {
 			$entry = null;
