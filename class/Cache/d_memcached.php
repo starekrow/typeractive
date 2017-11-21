@@ -23,6 +23,9 @@ class d_memcached extends CacheDriver
 	*/
 	public function connect( $options = null )
 	{
+		if (!class_exists( "\\Memcached" )) {
+			return false;
+		}
 		$host = "localhost";
 		$port = 11211;
 		if ($options) {
@@ -38,9 +41,6 @@ class d_memcached extends CacheDriver
 			}
 		}
 		try {
-			if (!class_exists( "\\Memcached" )) {
-				return false;
-			}
 			$this->mc = new \Memcached();
 			// connections are cached outside the VM in some configurations
 			$servers = $this->mc->getServerList();
@@ -50,7 +50,6 @@ class d_memcached extends CacheDriver
 					if ($server['host'] == $host and $server['port'] == $port) {
 						$already = true;
 					}
-
 				}
 			}
 			if (!$already) {
