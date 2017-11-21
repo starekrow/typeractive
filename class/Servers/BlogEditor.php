@@ -43,7 +43,11 @@ class BlogEditor extends PageServer
 			return $this->blog;
 		}
 		$u = UserData::Load( $_SESSION['userid'] );
+		if (!$u) {
+			throw new AppError( "UnknownUser" );
+		}
 		$this->user = $u;
+		// TODO: user allowed to create blog?
 		$b = $u->GetBlog();
 		if (!$b) {
 			$b = BlogData::Create( $u->id );
@@ -70,28 +74,22 @@ class BlogEditor extends PageServer
 			$this->tokens->rootpost = $b->GetDefaultPost();
 			return;
 		}
+		$this->replyType = "json";
 		$args = $this->args;
 		$err = null;
 		if ($args->title === null || $args->header === null) {
-			$err = "Invalid parameters";
-		} else {
-			$b = $this->GetBlog();
-			$b->SetTitle( $args->title );
-			$b->SetHeader( $args->header );
-			$b->SetBiography( $args->bio );
-			$b->SetDefaultPost( $args->rootpost );
-			$b->Save();
+			throw new AppError( "BadParameter", "missing title or header" );
 		}
-		if ($err) {
-			$this->ReplyJson( [
-				"alert" => "Error during update: $err."
-			] );
-		} else {
-			$this->ReplyJson( [
-				"alert" => "Update successful."
-				,"goto" => "-/dashboard"
-			] );
-		}
+		$b = $this->GetBlog();
+		$b->SetTitle( $args->title );
+		$b->SetHeader( $args->header );
+		$b->SetBiography( $args->bio );
+		$b->SetDefaultPost( $args->rootpost );
+		$b->Save();
+		$this->ReplyJson( [
+			"alert" => "Update successful."
+			,"goto" => "-/dashboard"
+		] );
 	}
 
 
@@ -109,36 +107,6 @@ class BlogEditor extends PageServer
 		$this->tokens->text = "";
 		$this->tokens->dateline = "";
 		$this->tokens->postid = "new";
-	}
-
-	/*
-	=====================
-	CreatePostWithText
-	=====================
-	*/
-	function CreatePostWithText()
-	{
-		$b = $this->GetBlog();
-		$args = $this->args;
-		$err = null;
-		if ($args->title === null || $args->text === null) {
-			$this->ReplyJson( [
-				"alert" => "Invalid Parameters"
-			] );
-		} else {
-			$post = $b->CreateDraft( [
-				 "title" => $args->title
-				,"text" => $args->text
-			] );
-			$this->SetupLink( $post, $args->link );
-			$this->ReplyJson( [
-				 "alert" => "Created new draft."
-				,"run" => 
-					"assign_post_id(\"" . $post->id . "\");" .
-					"unmask_post_tools();"
-				//,"goto" => "-/dashboard"
-			] );
-		}
 	}
 
 	/*
@@ -199,34 +167,63 @@ class BlogEditor extends PageServer
 	{
 		$b = $this->GetBlog();
 
-		if ($this->args->post == "new") {
-			$this->CreatePostWithText();
-
-			return;
-		}
 		$p = PostData::Load( $this->args->post );
 		if (!$p || $p->GetAuthor() != $b->GetAuthor()) {
 			$this->html = "Invalid post ID";
 			return;
 		}
+		$this->html = file_get_contents( "res/blog_draft.html" );
+		$this->tokens->screen_title = "Edit Post";
+		$this->tokens->title = $p->GetTitle();
+		$this->tokens->text = $p->GetDraft();
+		$this->tokens->dateline = $p->GetDateline();
+		$this->tokens->postid = $this->args->post;
+		$this->tokens->link = "";
+		$lid = $p->GetLinkId();
+		if ($lid) {
+			$l = LinkData::Load( $lid );
+			$this->tokens->link = $l->GetLink();
+		}
+	}
 
+	/*
+	=====================
+	SavePost
+	=====================
+	*/
+	function SavePost()
+	{
+		$b = $this->GetBlog();
+		$this->replyType = "json";
+		$args = $this->args;
 		if ($this->method != "POST") {
-			$this->html = file_get_contents( "res/blog_draft.html" );
-			$this->tokens->screen_title = "Edit Post";
-			$this->tokens->title = $p->GetTitle();
-			$this->tokens->text = $p->GetDraft();
-			$this->tokens->dateline = $p->GetDateline();
-			$this->tokens->postid = $this->args->post;
-			$this->tokens->link = "";
-			$lid = $p->GetLinkId();
-			if ($lid) {
-				$l = LinkData::Load( $lid );
-				$this->tokens->link = $l->GetLink();
+			throw new AppError( "NotAllowed", "Invalid method" );
+		}
+		if ($args->post == "new") {
+			$args = $this->args;
+			$err = null;
+			if ($args->title === null || $args->text === null) {
+				throw new AppError( "BadParameter" );
+			} else {
+				$post = $b->CreateDraft( [
+					 "title" => $args->title
+					,"text" => $args->text
+				] );
+				$this->SetupLink( $post, $args->link );
+				$this->ReplyJson( [
+					 "alert" => "Created new draft."
+					,"run" => 
+						"assign_post_id(\"" . $post->id . "\");" .
+						"unmask_post_tools();"
+				] );
 			}
 			return;
 		}
+		$p = PostData::Load( $args->post );
+		if (!$p || $p->GetAuthor() != $b->GetAuthor()) {
+			throw new AppError( "NotFound", "Invalid post ID" );
+		}
 
-		$args = $this->args;
 		$err = null;
 		$p->SetDraft( $args->text );
 		$p->SetTitle( $args->title );
@@ -234,17 +231,12 @@ class BlogEditor extends PageServer
 		$this->SetupLink( $p, $args->link );
 		$p->Save();
 
-		if ($err) {
-			$this->ReplyJson( [
-				"alert" => "Error during update: $err."
-			] );
-		} else {
-			$this->ReplyJson( [
-				 "alert" => "Saved."
-				,"run" => "unmask_post_tools();"
-			] );
-		}
+		$this->ReplyJson( [
+			 "alert" => "Saved."
+			,"run" => "unmask_post_tools();"
+		] );
 	}
+
 
 	/*
 	=====================
@@ -253,28 +245,23 @@ class BlogEditor extends PageServer
 	*/
 	function PublishPost()
 	{
+		$this->replyType = "json";
 		$b = $this->GetBlog();
 		$p = PostData::Load( $this->args->post );
 		if (!$p || $p->GetAuthor() != $b->GetAuthor()) {
-			$this->html = "Invalid post ID";
-			return;
+			throw new AppError( "NotFound", "Invalid post ID" );
 		}
 		if ($this->method != "POST") {
-			$this->html = "Invalid method";
-			return;
+			throw new AppError( "NotAllowed", "Invalid method" );
 		}
 		$ntext = $p->GetDraft();
 		$otext = $p->GetText();
 		$err = null;
 		if ($ntext == "") {
-			$err = "Empty draft";
+			throw new AppError( "Empty", "Cannot publish an empty draft" );
 		}
-		if ($otext === $ptext) {
-			$err = "No changes in draft";
-		}
-		if ($err) {
-			$this->html = $err;
-			return;
+		if ($otext === $ntext) {
+			throw new AppError( "Unchanged", "No changes to publish" );
 		}
 		$p->SetText( $ntext );
 		$p->SetState( "published" );
@@ -328,8 +315,7 @@ class BlogEditor extends PageServer
 		$b = $this->GetBlog();
 		$p = PostData::Load( $this->args->post );
 		if (!$p || $p->GetAuthor() != $b->GetAuthor()) {
-			$this->html = "Invalid post ID";
-			return;
+			throw new AppError( "NotFound", "Invalid post ID" );
 		}
 		$got = BlogServer::RenderPost( $b, $p, [ "draft" => true ] );
 		$this->html = $got->html;
@@ -404,31 +390,43 @@ class BlogEditor extends PageServer
 		if (empty($_SESSION['userid'])) {
 			return $this->NeedToSignIn();
 		}
-		$p = $this->path != "" ? substr( $this->path, 1 ) : "";
-		switch ($p) {
-		case "configure":
-			return $this->ConfigureBlog();
-		case "draft":
-			return $this->NewDraft();
-		case "edit":
-			return $this->EditPost();
-		case "save":
-			return $this->SavePost();
-		case "publish":
-			return $this->PublishPost();
-		case "unpublish":
-			return $this->UnpublishPost();
-		case "views":
-			return $this->ShowViews();
-		case "posts":
-			return $this->ListPosts();
-		case "drafts":
-			return $this->ListDrafts();
-		case "preview":
-			return $this->PreviewPost();
-		default:
-			Http::NotFound();
-			$this->html = "Unknown editor link";
+		try {
+			$p = $this->path != "" ? substr( $this->path, 1 ) : "";
+			switch ($p) {
+			case "configure":
+				return $this->ConfigureBlog();
+			case "draft":
+				return $this->NewDraft();
+			case "edit":
+				return $this->EditPost();
+			case "save":
+				return $this->SavePost();
+			case "publish":
+				return $this->PublishPost();
+			case "unpublish":
+				return $this->UnpublishPost();
+			case "views":
+				return $this->ShowViews();
+			case "posts":
+				return $this->ListPosts();
+			case "drafts":
+				return $this->ListDrafts();
+			case "preview":
+				return $this->PreviewPost();
+			default:
+				throw new AppError( "NotFound", "Unknown editor link" );
+			}
+		} catch (AppError $e) {
+			if ($this->replyType == "json") {
+				$this->ReplyJson( [
+					"alert" => $e->userMessage()
+				] );
+			} else {
+				if ($e->getCode() == "NotFound") {
+					Http::NotFound();
+				}
+				$this->html = $e->userMessage();
+			}
 		}
 	}
 }
