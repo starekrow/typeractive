@@ -15,7 +15,7 @@
 
 .blog {
 	margin: 0 2% 0 2%;
-	font-size: 18px;
+	font-size: 16px;
 	max-width: 700px;
 }
 
@@ -75,6 +75,20 @@
 	margin: 2em 2em;
 	text-align: center;
 }
+
+.posttools .ifnotpublished {
+}
+.posttools .ifpublished {
+	display: none;
+}
+
+.posttools.published .ifpublished {
+	display: inline-block;
+}
+.posttools.published .ifnotpublished {
+	display: none;
+}
+
 .posttools.show {
 	display: block;	
 }
@@ -112,18 +126,20 @@
 	}
 }
 
+form.compact {
+	display: inline-block;
+	margin: 0;
+	padding: 0;
+}
+
+.toc .date {
+	color: #bdad6d;
+}
 </style>
 
 <div class=blog_container>
 	<div class=header>
 		<<header>>
-	</div>
-
-	<div class="posttools <<show_post_tools?>>">
-		<a class=button href="-/blog/edit?post=<<postid>>">Edit</a>
-		<a class=button href="-/blog/publish?post=<<postid>>">Publish</a>
-		<a class=button href="-/blog/delete?post=<<postid>>">Delete</a>
-		<div class=mask></div>
 	</div>
 
 	<div class=col1>
@@ -145,11 +161,17 @@
 			<<bio>>
 		</div>
 	</div>
+
 	<div class="posttools <<show_post_tools?>>">
 		<a class=button href="-/blog/edit?post=<<postid>>">Edit</a>
-		<a class=button href="-/blog/publish?post=<<postid>>">Publish</a>
-		<a class=button href="-/blog/delete?post=<<postid>>">Delete</a>
-		<div class=mask></div>
+		<form class="compact ifnotpublished" action="-/blog/publish" use-autoloader=1 method=POST>
+			<input type=hidden name=post value="<<postid>>">
+			<button type=submit>Publish</button>
+		</form>
+		<form class="compact ifpublished" action="-/blog/unpublish" use-autoloader=1 method=POST>
+			<input type=hidden name=post value="<<postid>>">
+			<button type=submit>Unpublish</button>
+		</form>
 	</div>
 
 </div>

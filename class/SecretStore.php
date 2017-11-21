@@ -105,7 +105,7 @@ class SecretStore
 	public function Get( $name )
 	{
 		if (empty( $this->secrets[ $name ] )) {
-			$sf = file_get_contents( "$this->path/$name.info" );
+			$sf = @file_get_contents( "$this->path/$name.info" );
 			if (!$sf) {
 				return false;
 			}

@@ -15,6 +15,7 @@ Creates drafts, edits pages and works with the history
 class BlogEditor extends PageServer
 {
 	public $blog;
+
 	/*
 	=====================
 	NeedToSignIn
@@ -42,6 +43,7 @@ class BlogEditor extends PageServer
 			return $this->blog;
 		}
 		$u = UserData::Load( $_SESSION['userid'] );
+		$this->user = $u;
 		$b = $u->GetBlog();
 		if (!$b) {
 			$b = BlogData::Create( $u->id );
@@ -128,6 +130,7 @@ class BlogEditor extends PageServer
 				 "title" => $args->title
 				,"text" => $args->text
 			] );
+			$this->SetupLink( $post, $args->link );
 			$this->ReplyJson( [
 				 "alert" => "Created new draft."
 				,"run" => 
@@ -138,6 +141,54 @@ class BlogEditor extends PageServer
 		}
 	}
 
+	/*
+	=====================
+	SetupLink
+	=====================
+	*/
+	function SetupLink( $post, $link )
+	{
+		$lid = $post->GetLinkId();
+		$prefix = "/" . $_SESSION['username'] . "/";
+		$path = $link;
+		if (substr( $link, 0, strlen( $prefix ) ) !== $prefix) {
+			$path = $prefix . $link;
+		}
+		if ($link === "" || $link === null) {
+			if ($lid) {
+				LinkData::Remove( $lid );
+				$post->SetLinkId( null );
+				$post->Save();
+			}
+			return null;
+		}
+		if ($post->GetState() == "published") {
+			$lt = "draft";
+		} else {
+			$lt = "blogpost";
+		}
+		if ($lid) {
+			$l = LinkData::Load( $lid );
+			if (!$l) {
+				return false;
+			}
+			if (!$l->ChangeLink( $path )) {
+				return false;
+			}
+			if ($l->GetType() != $lt) {
+				$l->SetType( $lt );
+				$l->Save();
+			}
+			return $l;
+		}
+		$l = LinkData::Register( $path, $lt, $post->id );
+		if (!$l) {
+			return false;
+		}
+		$post->SetLinkId( $l->id );
+		$post->Save();
+		return $l;
+	}
 
 	/*
 	=====================
@@ -149,7 +200,9 @@ class BlogEditor extends PageServer
 		$b = $this->GetBlog();
 
 		if ($this->args->post == "new") {
-			return $this->CreatePostWithText();
+			$this->CreatePostWithText();
+
+			return;
 		}
 		$p = PostData::Load( $this->args->post );
 		if (!$p || $p->GetAuthor() != $b->GetAuthor()) {
@@ -164,6 +217,12 @@ class BlogEditor extends PageServer
 			$this->tokens->text = $p->GetDraft();
 			$this->tokens->dateline = $p->GetDateline();
 			$this->tokens->postid = $this->args->post;
+			$this->tokens->link = "";
+			$lid = $p->GetLinkId();
+			if ($lid) {
+				$l = LinkData::Load( $lid );
+				$this->tokens->link = $l->GetLink();
+			}
 			return;
 		}
 
@@ -172,6 +231,7 @@ class BlogEditor extends PageServer
 		$p->SetDraft( $args->text );
 		$p->SetTitle( $args->title );
 		$p->SetDateline( $args->dateline );
+		$this->SetupLink( $p, $args->link );
 		$p->Save();
 
 		if ($err) {
@@ -219,7 +279,41 @@ class BlogEditor extends PageServer
 		$p->SetText( $ntext );
 		$p->SetState( "published" );
 		$p->Save();
-		// TODO: linking
+		$l = LinkData::Load( $p->GetLinkId() );
+		if ($l) {
+			$l->SetType( "blogpost" );
+			$l->Save();
+		}
+		$this->ReplyJson( [
+			 "alert" => "Published."
+			,"goto" => "-/blog/posts"
+		] );
+	}
+
+	/*
+	=====================
+	UnpublishPost
+	=====================
+	*/
+	function UnpublishPost()
+	{
+		$b = $this->GetBlog();
+		$p = PostData::Load( $this->args->post );
+		if (!$p || $p->GetAuthor() != $b->GetAuthor()) {
+			$this->html = "Invalid post ID";
+			return;
+		}
+		if ($this->method != "POST") {
+			$this->html = "Invalid method";
+			return;
+		}
+		$p->SetState( "draft" );
+		$p->Save();
+		$l = LinkData::Load( $p->GetLinkId() );
+		if ($l) {
+			$l->SetType( "draft" );
+			$l->Save();
+		}
 	}
 
 	/*
@@ -263,15 +357,27 @@ class BlogEditor extends PageServer
 			$odl[] = $this->ReplaceAngTokens( $pt, [
 				 "title" => $title
 				,"postid" => $el->id
+				,"link" => "-/blog/edit?post=" . $el->id
 				,"mtime" => date("Y-m-d H:i:s", $el->GetDraftTimestamp() )
 			] );
 		}
 
 		$opl = [];
 		foreach ($pl as $el) {
+			$title = $el->GetTitle();
+			if ($title === "") {
+				$title = "(untitled)";
+			}
+			$elink = "-/blog/edit?post=" . $el->id;
+			$lid = $el->GetLinkId();
+			if ($lid) {
+				$link = LinkData::Load( $lid );
+				$elink = substr( $link->GetLink(), 1 );
+			}
 			$opl[] = $this->ReplaceAngTokens( $pt, [
 				 "title" => $title
 				,"postid" => $el->id
+				,"link" => htmlspecialchars( $elink )
 				,"mtime" => date("Y-m-d H:i:s", $el->GetLastUpdatedTimestamp() )
 			] );
 		}
@@ -296,7 +402,8 @@ class BlogEditor extends PageServer
 		if (empty($_SESSION['userid'])) {
 			return $this->NeedToSignIn();
 		}
-		switch ($this->path) {
+		$p = $this->path != "" ? substr( $this->path, 1 ) : "";
+		switch ($p) {
 		case "configure":
 			return $this->ConfigureBlog();
 		case "draft":
@@ -307,6 +414,8 @@ class BlogEditor extends PageServer
 			return $this->SavePost();
 		case "publish":
 			return $this->PublishPost();
+		case "unpublish":
+			return $this->UnpublishPost();
 		case "views":
 			return $this->ShowViews();
 		case "posts":

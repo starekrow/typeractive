@@ -71,6 +71,22 @@ class Dict implements
 
 	/*
 	=====================
+	Merge
+	=====================
+	*/
+	public function Merge( $other )
+	{
+		if (!$other) {
+			return;
+		}
+		foreach ($other as $k => $v) {
+			$this->data[ $k ] = $v;
+		}
+	}
+
+
+	/*
+	=====================
 	__construct
 	=====================
 	*/

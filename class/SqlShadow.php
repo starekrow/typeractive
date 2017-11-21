@@ -240,7 +240,7 @@ class SqlShadow implements
 		$ai = $this->def->autoindex;
 		$qtbl = $db->QuoteName( $this->table );
 		$qai = $db->QuoteName( $ai );
-		$sql = "SELECT * FROM $qtbl WHERE $qai=:$ai";
+		$sql = "WHERE $qai=:$ai";
 		$this->def->autoindexQuery = $sql;
 		return $sql;
 	}
@@ -258,7 +258,7 @@ class SqlShadow implements
 		$db = Sql::AutoConnect();
 		$il = $this->def->index;
 		$qtbl = $db->QuoteName( $this->table );
-		$sql = "SELECT * FROM $qtbl";
+		$sql = "";
 		$stitch = ' WHERE ';
 		foreach ($this->def->index as $col) {
 			$qcol = $db->QuoteName( $col );
@@ -278,7 +278,7 @@ class SqlShadow implements
 	{
 		$db = Sql::AutoConnect();
 		$qtbl = $db->QuoteName( $this->table );
-		$sql = "SELECT * FROM $qtbl";
+		$sql = "";
 		$stitch = ' WHERE ';
 		foreach ($cols as $col => $val) {
 			$qcol = $db->QuoteName( $col );
@@ -296,6 +296,8 @@ class SqlShadow implements
 	*/
 	public function Load( $index = null )
 	{
+		$db = Sql::AutoConnect();
+		$qtbl = $db->QuoteName( $this->table );
 		$ai = $this->def->autoindex;
 		if ($index === null) {
 			$index = $this->data;
@@ -316,6 +318,7 @@ class SqlShadow implements
 		if (!$index || !$sql) {
 			return false;
 		}
+		$sql = "SELECT * FROM $qtbl $sql";
 		$db = Sql::AutoConnect();
 		$got = $db->query( $sql, $index );
 		$this->isNew = false;
@@ -332,11 +335,13 @@ class SqlShadow implements
 
 	/*
 	=====================
-	Find
+	Delete
 	=====================
 	*/
-	public function Find( $fields = null, $options = null )
+	public function Delete( $fields = null, $options = null )
 	{
+		$db = Sql::AutoConnect();
+		$qtbl = $db->QuoteName( $this->table );
 		$ai = $this->def->autoindex;
 		if ($fields === null) {
 			$fields = $this->data;
@@ -357,6 +362,50 @@ class SqlShadow implements
 		if (!$fields || !$sql) {
 			return false;
 		}
+		$sql = "SELECT * FROM $qtbl $sql";
+		$db = Sql::AutoConnect();
+		$got = $db->query( $sql, $fields );
+		if (!$got) {
+			return false;
+		}
+		$vals = [];
+		foreach ($got as $row) {
+			$vals[] = new SqlShadow( $this->table, $row );
+		}
+		return $vals;
+	}
+
+
+	/*
+	=====================
+	Find
+	=====================
+	*/
+	public function Find( $fields = null, $options = null )
+	{
+		$db = Sql::AutoConnect();
+		$qtbl = $db->QuoteName( $this->table );
+		$ai = $this->def->autoindex;
+		if ($fields === null) {
+			$fields = $this->data;
+		}
+		if (is_string( $fields ) && $ai) {
+			$fields = [ "$ai" => $fields ];
+			$sql = $this->GetAutoIndexLoadSql();
+		} else if (is_array( $fields ) || is_object( $fields )) {
+			$fields = (array)$fields;
+			if (isset( $fields[ $ai ])) {
+				$fields = [ "$ai" => $fields[ $ai ] ];
+				$sql = $this->GetAutoIndexLoadSql();
+			} else {
+//				$fields = $this->GetIndexKeys( $fields );
+				$sql = $this->CalcLoadSql( $fields );
+			}
+		}
+		if (!$fields || !$sql) {
+			return false;
+		}
+		$sql = "SELECT * FROM $qtbl $sql";
 		$db = Sql::AutoConnect();
 		$got = $db->query( $sql, $fields );
 		if (!$got) {

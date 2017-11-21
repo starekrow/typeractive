@@ -19,6 +19,7 @@ to produce a complete HTTP response with appropriate headers, etc.
 
 class Server
 {
+	protected $request;
 	protected $path;
 	protected $args;
 	protected $headers;
@@ -223,11 +224,11 @@ class Server
 	*/
 	public function SetupRequest( $request )
 	{
-		$r = new Dict( $request );
+		$this->request = $r = new Dict( $request );
 		$this->path = isset( $r->path ) ? $r->path : "";
 		$this->args = new Dict( $r->args );
 		$this->headers = new Dict( $r->headers );
-		$this->method = isset( $r->method ) ? $r->method : Http::$method;
+		$this->method = $r->method;
 	}
 
 	/*

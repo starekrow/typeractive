@@ -83,6 +83,11 @@
 .posttools.masked .mask {
 	display: block;
 }
+form.compact {
+	display: inline-block;
+	margin: 0;
+	padding: 0;
+}
 
 </style>
 
@@ -126,7 +131,7 @@
 			} );
 			return;
 		}
-		var watch = [ "title", "dateline", "text" ];
+		var watch = [ "title", "link", "dateline", "text" ];
 		if (flag !== false) {
 			for (let k in watch) {
 				let n = $n( watch[k] );
@@ -167,6 +172,10 @@
 		<input class=large id=dateline name=dateline type=text value="<<dateline>>">
 	</div>
 	<div class=field>
+		<label for=link>Link</label>
+		<input class=large id=link name=link type=text value="<<link>>">
+	</div>
+	<div class=field>
 		<label for=text>Post</label>
 		<textarea id=text name=text><<text>></textarea>
 	</div>
@@ -178,9 +187,14 @@
 
 <div id=posttools class="posttools <<mask_post_tools?>>">
 	<a class=button href="-/blog/preview?post=<<postid>>">Preview</a>
-	<a class=button href="-/blog/publish?post=<<postid>>">Publish</a>
-	<a class=button href="-/blog/delete?post=<<postid>>">Delete</a>
-	<div class=mask></div>
+	<form class=compact action="-/blog/publish" use-autoloader=1 method=POST>
+		<input type=hidden name=post value="<<postid>>">
+		<button type=submit>Publish</button>
+	</form>
+	<form class=compact action="-/blog/delete" use-autoloader=1 method=POST>
+		<input type=hidden name=post value="<<postid>>">
+		<button type=submit>Delete</button>
+	</form>
 </div>
 
 <a class="backbtn compact button" href="<<backlink>>" onclick="history.go(-1);return false;">

@@ -61,6 +61,8 @@ class Sql
 	{
 		if ($instance) {
 			self::$autoInstance = $instance;
+		} else if (self::$autoInstance && self::$autoInstance->connected) {
+			return self::$autoInstance;
 		}
 		if (!$instance) {
 			$instance = self::$autoInstance = new Sql();

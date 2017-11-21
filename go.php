@@ -26,8 +26,9 @@ class ClassLoader
 			return;
 		}
 		if (substr( $name, 0, 12 ) == 'Typeractive\\' ) {
-			$name = substr( $name, 12 );
+			$name = str_replace( "\\", "/", substr( $name, 12 ) );
 			if (!@include( "class/$name.php" )) {
+				error_log( "autoload - not found 1" );
 				if (substr( $name, -4 ) == "Data") {
 					//$name = substr( $name, 0, strlen($name)-4 );
 					include( "class/Data/$name.php" );
@@ -53,58 +54,159 @@ $gSecrets = null;
 
 /*
 =====================
-EmitSitePage
+NormalizePath
 
-Renders a "standard" site page with the given HTML.
-The page includes basic support script and css, a loader mask, and a site
-header with menu/identity block.
+Normalizes a path-like string, processing ".." and ".", removing multiple
+"/" and converting all "\" to "/". Leading and trailing "/", if any, are 
+retained.
 =====================
 */
-function EmitSitePage( $parts )
+function NormalizePath( $path )
 {
-	$frm = file_get_contents( "res/site_frame.html" );
-	$css = file_get_contents( "res/site_frame.css" );
-	$js = file_get_contents( "res/main.js" );
-	$hdr = file_get_contents( "res/site_header.html" );
-	$ftr = file_get_contents( "res/site_footer.html" );
-	$ext = file_get_contents( "res/ext_dialog.html" );
-
-	/* Note: At some point it would be possible to parse out the various 
-	   embedded <style> tags and move them to the head, but meh. */
-
-	$parts = (object)$parts;
-	$body = empty( $parts->html ) ? "" : $parts->html;
-	if (!empty( $parts->js )) {
-		$js .= $parts->js;
+	$path = str_replace( "\\", "/", $path );
+	$path = preg_replace( "|/+|", "/", $path );
+	if ($path === "") {
+		return $path;
 	}
-	if (!empty( $parts->css )) {
-		$css .= $parts->css;
+	$start = 0;
+	$end = 0;
+	if ($path[0] != "/") {
+		$path = "/$path";
+		$start = 1;
 	}
-	$title = empty( $parts->title ) ? "Untitled" : $parts->title;
+	if ($path[ strlen($path) - 1 ] != "/") {
+		$path = "$path/";
+		$end = 1;
+	}
+	for (;;) {
+		$res = preg_replace( "|/\./|", "/", $path );
+		if ($res === $path) {
+			break;
+		}
+		$path = $res;
+	}
+	for (;;) {
+		$res = preg_replace( "|[^/]+/\.\./|", "", $path );
+		if ($res === $path) {
+			break;
+		}
+		$path = $res;
+	}
+	return substr( $path, $start, strlen( $path ) - $start - $end );
+}
 
-	$hdr = str_replace( "{{approot}}", Http::$appRootUrl, $hdr );
-	$ftr = str_replace( "{{approot}}", Http::$appRootUrl, $ftr );
 
-	$out = str_replace( [
-			"{{header}}",
-			"{{css}}",
-			"{{script}}",
-			"{{footer}}",
-			"{{title}}",
-			"{{body}}",
-			"{{html-extensions}}"
-		], [
-			$hdr,
-			$css,
-			$js,
-			$ftr,
-			$title,
-			$body,
-			$ext
-		], 
-		$frm
-	 );
-	echo $out;
+/*
+=====================
+ResolvePath
+
+Resolves a path to a link type, an ID and a remaining fragment.
+The path must start with "/". If only part of the path is used during 
+resolution, the remainder will be returned in a "path" property. This 
+remainder will *always* have a "/" at the beginning unless it is empty.
+Links must be stored without a trailing "/".
+=====================
+*/
+function ResolvePath( $path )
+{
+	$path = str_replace( "\\", "/", $path );
+	if ($path[0] != "/") {
+		$path = "/$path";
+	}
+	// Don't mess around with bad paths
+	if (   ($path !== "" && $path[0] != "/") 
+		|| strlen( $path ) > 200 
+		|| strpos( $path, "/." ) !== false
+	   ) {
+		return (object) [
+			 "type" => "illegal"
+			,"link" => ""
+			,"path" => ""
+			,"id" => null
+		];
+	}
+	// peel off bootstrap to prevent DB access
+	if (substr( $path, 0, 14 ) == "/--bootstrap--") {
+		return (object)[
+			 "type" => "bootstrap"
+			,"link" => "/--bootstrap--"
+			,"path" => substr( $path, 14 )
+			,"id" => null
+		];
+	}
+	// peel off existing content to prevent unnecessary DB access
+	if (substr( $path, 0, 9 ) == "/content/") {
+		// quick check for actual file
+		$path = substr( $path, 8 );
+		$path = str_replace( "\\", "/", $path );
+		// no trickery allowed
+		if (strpos( $path, "/." ) !== false) {
+			$path = "/--error--";
+		}
+		if (file_exists( "content$path" )) {
+			return (object)[
+				 "type" => "content"
+				,"link" => $path
+				,"path" => ""
+				,"id" => null
+			];
+		}
+	}
+	$link = LinkData::Lookup( $path );
+	if ($link) {
+		return (object)[
+			 "type" => $link->GetType()
+			,"id" => $link->GetReference()
+			,"link" => $link->GetLink()
+			,"path" => ""
+		];
+	}
+	$path = NormalizePath( $path );
+
+	$pp = explode( "/", $path );
+	/* TODO: finish this
+	for ($i = count( $pp ); $i > 0; ++$i) {
+		$psub = implode( "/", array_slice( $path, 0, $i ) );
+		$link = LinkData::Lookup( $psub );
+		if ($link) {
+			$rem = array_slice( $path, $i );
+			$pre = count( $rem ) ? "/" : "";
+			return (object)[
+				 "type" => $link->GetType()
+				,"id" => $link->GetReference()
+				,"link" => $link->GetLink()
+				,"path" => $pre . implode( "/", $rem );
+			];
+		}
+
+	}
+	*/
+	// No luck in link table, check built-in rules
+	if ($path === "" || $path === "/") {
+		return (object)[
+			 "type" => "root"
+			,"id" => null
+			,"link" => $path
+			,"path" => ""
+		];
+	}
+	// private management 
+	if ($pp[1] == "-" && count($pp) >= 3) {
+		session_start();
+		$tp = "-" . $pp[2];
+		return (object) [
+			 "type" => "-" . $pp[2]
+			,"link" => implode( "/", array_slice( $pp, 0, 3 ) )
+			,"path" => "/" . implode( "/", array_slice( $pp, 3 ) )
+			,"id" => empty( $_SESSION['userid'] ) ? null : $_SESSION['userid']
+		];
+	}
+	return (object)[
+		 "type" => "unknown"
+		,"id" => null
+		,"link" => null
+		,"path" => $path
+	];
 }
 
 /*
@@ -151,46 +253,44 @@ function Launch()
 	SqlShadow::DefineTable( "text", ["autoindex" => "textid"] );
 	SqlShadow::DefineTable( "posts", ["autoindex" => "postid"] );
 
-	$pp = explode( '/', Http::$path, 3 );
-	$p1 = (count( $pp ) > 1) ? $pp[1] : "";
-	$p2 = (count( $pp ) > 2) ? $pp[2] : "";
+	
+	$r = ResolvePath( Http::$path );
+
 	$req = [
 		 "args" => $_REQUEST
-		,"path" => $p2
+		,"path" => $r->path
+		,"link" => $r->link
+		,"id" => $r->id
 		,"headers" => Http::$headers
+		,"method" => Http::$method
+		,"referrer" => Http::$referrer
+		,"source" => Http::$source
 	];
-	switch ($p1) {
-	case "":
-		MainPageServer::Handle( $req );
-		return;
-	case "-":
-		$pp = explode( '/', $p2, 2 );
-		$p2 = $pp[0];
-		$pp[0] = "";
-		$req['path'] = implode( "", $pp );
-		switch ($p2) {
-		case "login":
-			return LoginServer::Handle( $req );
-		case "dashboard":
-			return DashboardServer::Handle( $req );
-		case "blog":
-			return BlogEditor::Handle( $req );
-		}
-		break;
+
+	//Cache::prep( "memcached" );
+
+	switch ($r->type) {
+	case "bootstrap":
+		return Bootstrap::Serve( $req );
+	case "content":
+		return ContentServer::Handle( $req );
+	case "root":
+		return MainPageServer::Handle( $req );
+	case "-login":
+		return LoginServer::Handle( $req );
+	case "-dashboard":
+		return DashboardServer::Handle( $req );
+	case "-blog":
+		return BlogEditor::Handle( $req );
+	case "blogpost":
+		return BlogServer::Handle( $req );
 	case "user":
-		break;
-	case "--bootstrap--":
-		return Bootstrap::Serve( implode( '/', array_slice( $pl, 2 ) ) );
-	}
-	$l = LinkData::Lookup( Http::$path );
-	if (!$l) {
+	default:
 		Http::NotFound();
 		Http::ContentType( "text/plain" );
 		echo "404 Not Found";
-		return;
+		return;	
 	}
-	$b = Blog::Open( $l->GetReference() );
-	$b->RenderPage( implode( '/', $rest ) );
 }
 
 Launch();

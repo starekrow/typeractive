@@ -36,6 +36,18 @@ table tr {
 	border: none;
 }
 
+a {
+	text-decoration: none;
+	color: #1a1aff;
+}
+
+a:visited {
+	color: #1a1aff;
+}
+
+a:hover {
+	text-decoration: underline;
+}
 
 button, a.button {
 	font-size: 18px;
@@ -88,7 +100,7 @@ input {
 
 textarea {
 	font-size: 18px;
-	 padding: 5px 10px; 
+	padding: 5px 10px; 
 	border-radius: 5px;
 	border: 1px solid <<defaultfg>>;
 	margin-bottom: 15px;

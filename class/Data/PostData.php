@@ -148,6 +148,9 @@ class PostData
 		case "published":
 			$this->record->published = 1;
 			$this->record->deleted = 0;
+			if (!$this->record->postdate) {
+				$this->record->postdate = $this->record->DateTime();
+			}
 			break;
 		case "deleted":
 			$this->record->deleted = 1;
@@ -230,6 +233,16 @@ class PostData
 
 	/*
 	=====================
+	GetBlogId
+	=====================
+	*/
+	public function GetBlogId()
+	{
+		return $this->record->blogid;
+	}
+
+	/*
+	=====================
 	GetPostDate
 	=====================
 	*/
@@ -282,6 +295,27 @@ class PostData
 		$this->GetTextField( "textid" );
 		return $this->text->textid->GetInfo()->mtimestamp;
 	}
+
+	/*
+	=====================
+	GetLinkId
+	=====================
+	*/
+	public function GetLinkId()
+	{
+		return $this->record->linkid;
+	}
+
+	/*
+	=====================
+	SetLinkId
+	=====================
+	*/
+	public function SetLinkId( $lid )
+	{
+		$this->record->linkid = $lid;
+	}
+
 
 	/*
 	=====================

@@ -44,6 +44,16 @@ class LinkData
 
 	/*
 	=====================
+	SetType
+	=====================
+	*/
+	public function SetType( $type )
+	{
+		$this->record->type = $type;
+	}
+
+	/*
+	=====================
 	GetReference
 	=====================
 	*/
@@ -51,6 +61,26 @@ class LinkData
 	{
 		return $this->record->otherid;
 	}
+
+	/*
+	=====================
+	ChangeLink
+	=====================
+	*/
+	public function ChangeLink( $path )
+	{
+		if ($path === $this->record->link) {
+			return true;
+		}
+		$olink = $this->record->link;
+		$this->record->link = $path;
+		if ($this->record->Flush() === false) {
+			$this->record->link = $olink;
+			return false;
+		}
+		return true;
+	}
+
 
 	/*
 	=====================
@@ -74,9 +104,59 @@ class LinkData
 
 	/*
 	=====================
+	Save
+	=====================
+	*/
+	public function Save()
+	{
+		return $this->record->Flush();
+	}
+
+	/*
+	=====================
+	Delete
+	=====================
+	*/
+	public static function Delete( $id )
+	{
+		$rec = new SqlShadow( "links" );
+		$rec->linkid = $id;
+		if (!$rec->Load()) {
+			return false;
+		}
+		$rec = new SqlShadow( "links" );
+		$rec->linkid = $id;
+		return $rec->Delete();
+	}
+
+	/*
+	=====================
+	LookupPrefix
+
+	Tries to locate a matching link.
+	=====================
+	*/
+	public static function LookupPrefix( $link, $type = null, $parent = null )
+	{
+		$rec = new SqlShadow( "links" );
+		$rec->link = $link;
+		if ($type) {
+			$rec->type = $type;
+		}
+		if ($parent) {
+			$rec->parentid = $parentid;
+		}
+		if (!$rec->Load()) {
+			return false;
+		}
+		return new LinkData( $rec );
+	}
+
+	/*
+	=====================
 	Lookup
 
-	Tries to locate a matching permalink.
+	Tries to locate a matching link.
 	=====================
 	*/
 	public static function Lookup( $link, $type = null, $parent = null )
@@ -92,7 +172,22 @@ class LinkData
 		if (!$rec->Load()) {
 			return false;
 		}
-		return new Permalink( $rec );
+		return new LinkData( $rec );
+	}
+
+	/*
+	=====================
+	Load
+	=====================
+	*/
+	public static function Load( $id )
+	{
+		$rec = new SqlShadow( "links" );
+		$rec->linkid = $id;
+		if (!$rec->Load()) {
+			return false;
+		}
+		return new LinkData( $rec );
 	}
 
 	/*
@@ -110,11 +205,11 @@ class LinkData
 		$rec->link = $link;
 		$rec->type = $type;
 		$rec->otherid = $id;
-		$rec->parent = $parent;
+		$rec->parentid = $parent;
 		if (!$rec->Insert()) {
 			return false;
 		}
-		return new Permalink( $rec );
+		return new LinkData( $rec );
 	}
 
 }
