@@ -83,6 +83,7 @@ class BlogServer extends PageServer
 			 "tokens" => $toks
 			,"html" => file_get_contents( "res/blog_viewpost.html" )
 			,"author" => $post->getAuthor()
+			,"poststate" => $post->GetState()
 		] );
 	}
 
@@ -95,15 +96,22 @@ class BlogServer extends PageServer
 	{
 		Http::StopClientCache();
 		$id = $this->request->id;
-		$cv = null; //Cache::get( "full_post_" . $id );
-		if ($cv) {
-			$got = new Dict( $cv );
+
+		$key = "full_post_" . $id;
+		if (!Cache::lock( $key, 0, $val, 30, 10 )) {
+			$val = $val ? $val : Cache::wait( $key, 10 );
+			if (!$val) {
+				$this->html = "Error retrieving post. Please try again.";
+				return;
+			}
 		} else {
 			$post = PostData::Load( $id );
 			$blog = BlogData::Load( $post->GetBlogId() );
-			$got = self::RenderPost( $blog, $post );
-			Cache::set( "full_post_" . $id, $got, 10 );
+			$val = self::RenderPost( $blog, $post );
+			Cache::set( $key, $val, 300 );		// 5 minutes
+			Cache::unlock( $key );
 		}
+		$got = new Dict( $val );
 		$this->tokens->Merge( $got->tokens );
 		$this->html = $got->html;
 
@@ -111,7 +119,7 @@ class BlogServer extends PageServer
 			$_SESSION['userid'] == $got->author
 		   ) {
 			$this->tokens->show_post_tools = "show";
-		   	if ($post->GetState() == "published") {
+		   	if ($got->poststate == "published") {
 		   		$this->tokens->show_post_tools .= " published";
 		   	}
 		}

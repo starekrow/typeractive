@@ -28,9 +28,8 @@ class ClassLoader
 		if (substr( $name, 0, 12 ) == 'Typeractive\\' ) {
 			$name = str_replace( "\\", "/", substr( $name, 12 ) );
 			if (!@include( "class/$name.php" )) {
-				error_log( "autoload - not found 1" );
+				//error_log( "autoload - not found 1" );
 				if (substr( $name, -4 ) == "Data") {
-					//$name = substr( $name, 0, strlen($name)-4 );
 					include( "class/Data/$name.php" );
 				} else if (substr( $name, -6 ) == "Server") {
 					include( "class/Servers/$name.php" );
@@ -152,14 +151,20 @@ function ResolvePath( $path )
 			];
 		}
 	}
+	$chk = Cache::get( "link:$path" );
+	if ($chk) {
+		return $chk;
+	}
 	$link = LinkData::Lookup( $path );
 	if ($link) {
-		return (object)[
+		$res = (object)[
 			 "type" => $link->GetType()
 			,"id" => $link->GetReference()
 			,"link" => $link->GetLink()
 			,"path" => ""
 		];
+		Cache::set( "link:$path", $res );
+		return $res;
 	}
 	$path = NormalizePath( $path );
 
@@ -253,6 +258,7 @@ function Launch()
 	SqlShadow::DefineTable( "text", ["autoindex" => "textid"] );
 	SqlShadow::DefineTable( "posts", ["autoindex" => "postid"] );
 
+	Cache::setDefault( "file" );
 	
 	$r = ResolvePath( Http::$path );
 
@@ -267,7 +273,6 @@ function Launch()
 		,"source" => Http::$source
 	];
 
-	//Cache::prep( "memcached" );
 
 	switch ($r->type) {
 	case "bootstrap":

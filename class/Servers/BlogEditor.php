@@ -163,9 +163,9 @@ class BlogEditor extends PageServer
 			return null;
 		}
 		if ($post->GetState() == "published") {
-			$lt = "draft";
-		} else {
 			$lt = "blogpost";
+		} else {
+			$lt = "draft";
 		}
 		if ($lid) {
 			$l = LinkData::Load( $lid );
@@ -279,6 +279,7 @@ class BlogEditor extends PageServer
 		$p->SetText( $ntext );
 		$p->SetState( "published" );
 		$p->Save();
+		Cache::remove( "full_post_" . $p->id );
 		$l = LinkData::Load( $p->GetLinkId() );
 		if ($l) {
 			$l->SetType( "blogpost" );
@@ -307,6 +308,7 @@ class BlogEditor extends PageServer
 			$this->html = "Invalid method";
 			return;
 		}
+		Cache::remove( "full_post_" . $p->id );
 		$p->SetState( "draft" );
 		$p->Save();
 		$l = LinkData::Load( $p->GetLinkId() );

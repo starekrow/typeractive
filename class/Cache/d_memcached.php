@@ -1,4 +1,4 @@
-<?php /* Copyright (C) 2017 David O'Riva. All rights reserved.
+<?php /* Copyright (C) 2017 David O'Riva. MIT License.
        ********************************************************/
 namespace Typeractive\Cache;
 
@@ -9,19 +9,19 @@ memcached - Cache driver for memcached
 
 ================================================================================
 */
-class memcached extends CacheDriver
+class d_memcached extends CacheDriver
 {
 	protected $mc;
 
 	/*
 	=====================
-	__construct
+	connect
 
 	Connect to a cache instance.
 	Returns true if the connection succeeds (or may succeed in the future).
 	=====================
 	*/
-	public function __construct( $options = null )
+	public function connect( $options = null )
 	{
 		$host = "localhost";
 		$port = 11211;
@@ -37,8 +37,29 @@ class memcached extends CacheDriver
 				}
 			}
 		}
-		$this->mc = new \Memcached();
-		$this->mc->addServer( $host, $port );
+		try {
+			if (!class_exists( "\\Memcached" )) {
+				return false;
+			}
+			$this->mc = new \Memcached();
+			// connections are cached outside the VM in some configurations
+			$servers = $this->mc->getServerList();
+			$already = false;
+			if (is_array($servers)) {
+				foreach ($servers as $server) {
+					if ($server['host'] == $host and $server['port'] == $port) {
+						$already = true;
+					}
+
+				}
+			}
+			if (!$already) {
+				$this->mc->addServer( $host, $port );
+			}
+		} catch (Exception $e) {
+			return false;
+		}
+		return true;
 	}
 
 	/*
