@@ -17,7 +17,8 @@ date_default_timezone_set( "UTC" );
 class ClassLoader
 {
 	static $map = [
-		"Typeractive\\BlogEditor" => "class/Servers/BlogEditor.php"
+		 "Typeractive\\BlogEditor" => "class/Servers/BlogEditor.php"
+		,"Typeractive\\PageEditor" => "class/Servers/PageEditor.php"
 	];
 	static function Load( $name ) {
 		//error_log( "autoload $name" );
@@ -256,6 +257,7 @@ function Launch()
 	SqlShadow::DefineTable( "users", ["autoindex" => "userid"] );
 	SqlShadow::DefineTable( "links", ["autoindex" => "linkid"] );
 	SqlShadow::DefineTable( "text", ["autoindex" => "textid"] );
+	SqlShadow::DefineTable( "pages", ["autoindex" => "pageid"] );
 	SqlShadow::DefineTable( "posts", ["autoindex" => "postid"] );
 
 	Cache::setDefault( "file" );
@@ -266,6 +268,7 @@ function Launch()
 		 "args" => $_REQUEST
 		,"path" => $r->path
 		,"link" => $r->link
+		,"type" => $r->type
 		,"id" => $r->id
 		,"headers" => Http::$headers
 		,"method" => Http::$method
@@ -287,8 +290,14 @@ function Launch()
 		return DashboardServer::Handle( $req );
 	case "-blog":
 		return BlogEditor::Handle( $req );
+	case "-pages":
+		return PageEditor::Handle( $req );
 	case "blogpost":
 		return BlogServer::Handle( $req );
+	case "blogmain":
+		return BlogServer::Handle( $req );
+	case "page":
+		return PageServer::Handle( $req );
 	case "user":
 	default:
 		Http::NotFound();

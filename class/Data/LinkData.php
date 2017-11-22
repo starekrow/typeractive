@@ -54,12 +54,42 @@ class LinkData
 
 	/*
 	=====================
+	SetOwner
+	=====================
+	*/
+	public function SetOwner( $user )
+	{
+		$this->record->ownerid = $user;
+	}
+
+	/*
+	=====================
+	GetOwner
+	=====================
+	*/
+	public function GetOwner()
+	{
+		return $this->record->ownerid;
+	}
+
+	/*
+	=====================
 	GetReference
 	=====================
 	*/
 	public function GetReference()
 	{
 		return $this->record->otherid;
+	}
+
+	/*
+	=====================
+	SetReference
+	=====================
+	*/
+	public function SetReference( $id )
+	{
+		$this->record->otherid = $id;
 	}
 
 	/*
@@ -174,6 +204,29 @@ class LinkData
 		}
 		return new LinkData( $rec );
 	}
+
+	/*
+	=====================
+	Find
+
+	Searches links by field values. 
+	Returns `false` or an array of PageData.
+	=====================
+	*/
+	public static function Find( $fields, $options = NULL )
+	{
+		$rec = new SqlShadow( "links" );
+		$got = $rec->Find( $fields, $options );
+		if (!$got) {
+			return false;
+		}
+		foreach ($got as &$val) {
+			$val = new LinkData( $val );
+		}
+		return $got;
+	}
+
+
 
 	/*
 	=====================

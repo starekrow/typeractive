@@ -66,11 +66,11 @@
 	margin-bottom: 20px;
 }
 
-.posttools {
+.linktools {
 	position: relative;
 	text-align: center;
 }
-.posttools .mask {
+.linktools .mask {
 	display: none;
 	position: absolute;
 	left: 0px;
@@ -80,7 +80,7 @@
 	background-color: <<defaultbg>>;
 	opacity: 0.4;
 }
-.posttools.masked .mask {
+.linktools.masked .mask {
 	display: block;
 }
 form.compact {
@@ -92,27 +92,27 @@ form.compact {
 </style>
 
 <script type="text/javascript">
-	function mask_post_tools()
+	function mask_link_tools()
 	{
-		$n('posttools').classList.add( "masked" );			
+		$n('linktools').classList.add( "masked" );			
 	}
-	function unmask_post_tools()
+	function unmask_link_tools()
 	{
-		$n('posttools').classList.remove( "masked" );
+		$n('linktools').classList.remove( "masked" );
 		setup_field_handlers();
 	}
-	function assign_post_id( id )
+	function assign_link_id( id )
 	{
-		$n("editpostform").elements["post"] = id;
+		$n("editlinkform").elements["link"] = id;
 	}
 	function field_changed(ev)
 	{ 
-		mask_post_tools();
+		mask_link_tools();
 		setup_field_handlers( false );
 	}
 	function field_keypress(ev)
 	{
-		mask_post_tools(); 
+		mask_link_tools(); 
 		setup_field_handlers( false );
 	}
 	function field_keydown(ev)
@@ -120,7 +120,7 @@ form.compact {
 		var key = ev.which || ev.keyCode || 0;
 		if (key == 8 || key == 46 ||
 			(ev.target.tagName == "TEXTAREA" && key == 13)) {
-			mask_post_tools();
+			mask_link_tools();
 			setup_field_handlers( false );
 		}
 	}
@@ -155,7 +155,7 @@ form.compact {
 			} );
 			return;
 		}
-		var watch = [ "title", "link", "dateline", "text" ];
+		var watch = [ "name", "body" ];
 		if (flag !== false) {
 			for (let k in watch) {
 				let n = $n( watch[k] );
@@ -185,24 +185,16 @@ form.compact {
 	<svg class=glyph><use xlink:href="#svg-arrow-left"></use></svg>Back
 </a>
 
-<form class=config action="-/blog/save" use-autoloader=1 method=POST>
+<form class=config action="-/pages/savelink" use-autoloader=1 method=POST>
 	<h2><<screen_title>></h2>
-	<input name=post type=hidden value="<<postid>>">
+	<input name=link type=hidden value="<<linkid>>">
 	<div class=field>
-		<label for=title>Post Title</label>
-		<input class=large id=title name=title type=text value="<<title>>">
+		<label for=path>URL Path</label>
+		<input class=large id=path name=path type=text value="<<path>>">
 	</div>
 	<div class=field>
-		<label for=dateline>Dateline</label>
-		<input class=large id=dateline name=dateline type=text value="<<dateline>>">
-	</div>
-	<div class=field>
-		<label for=link>Link</label>
-		<input class=large id=link name=link type=text value="<<link>>">
-	</div>
-	<div class=field>
-		<label for=text>Post</label>
-		<textarea id=text name=text><<text>></textarea>
+		<label for=target>Target ID</label>
+		<input id=target name=target type=text value="<<target>>">
 	</div>
 
 	<button type=submit>
@@ -210,14 +202,9 @@ form.compact {
 	</button>
 </form>
 
-<div id=posttools class="posttools <<mask_post_tools?>>">
-	<a class=button href="-/blog/preview?post=<<postid>>">Preview</a>
-	<form class=compact action="-/blog/publish" use-autoloader=1 method=POST>
-		<input type=hidden name=post value="<<postid>>">
-		<button type=submit>Publish</button>
-	</form>
-	<form class=compact action="-/blog/delete" use-autoloader=1 method=POST>
-		<input type=hidden name=post value="<<postid>>">
+<div id=linktools class="linktools <<mask_link_tools?>>">
+	<form class=compact action="-/pages/deletelink" use-autoloader=1 method=POST>
+		<input type=hidden name=link value="<<linkid>>">
 		<button type=submit>Delete</button>
 	</form>
 	<div class=mask></div>

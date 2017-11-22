@@ -126,6 +126,16 @@ textarea {
 	position: absolute;
 }
 
+.autopageframe {
+	width: 80%;
+	margin: 0px auto;
+}
+@media all and (max-width:600px) {
+	.autopageframe {
+		width: 95%;
+	}
+}
+
 /*
 .blogtitle .main {
 	font-family: AmericanTypewriter, Lucida Sans Typewriter, Lucida Typewriter, Courier New, Courier, monospace;

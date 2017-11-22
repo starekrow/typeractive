@@ -12,7 +12,7 @@ Serves the main (home) page of the site.
 ================================================================================
 */
 
-class MainPageServer extends PageServer
+class MainPageServer extends HtmlServer
 {
 	/*
 	=====================
@@ -21,6 +21,6 @@ class MainPageServer extends PageServer
 	*/
 	function GetPage()
 	{
-		$this->html = "<center>MetalCoder welcomes you!</center>";
+		$this->html = "<div>MetalCoder welcomes you!</div>";
 	}
 }

@@ -7,6 +7,23 @@
 	margin-right: auto;
 }
 
+.blog_container .pagetitle {
+	font-size: 2em;
+	font-weight: bold;
+	margin-top: 0;
+	margin-bottom: 0.8em;
+	text-align: center;
+}
+
+.postbody {
+	margin-left: 2em;
+}
+
+.postlink {
+	margin-left: 2em;
+	font-style: italic;
+	font-size: 1.1em;
+}
 
 .col1 {
 	width: 66%;
@@ -25,7 +42,7 @@
 }
 
 .header {
-	margin: 0.5em 3em 1em 3em;
+	margin: 0.5em 3em 0.5em 3em;
 }
 
 .blog p {
@@ -33,7 +50,7 @@
 }
 
 .blog .title {
-	font-size: 2em;
+	font-size: 1.5em;
 	margin: 0;
 	font-weight: bold;
 }
@@ -195,15 +212,26 @@ form.compact {
 		<<header>>
 	</div>
 
+	<div class=pagetitle>
+		Recent Posts
+	</div>
+
 	<div class=col1>
 		<div class=blog>
+<<foreach:teasers>>			
 			<div class=title>
 				<<title>>
 			</div>
 			<div class=dateline>
 				<<dateline>>
 			</div>
-			<<mainpost>>
+			<div class=postbody>
+				<<mainpost>>
+			</div>
+			<div class=postlink>
+				<a href="<<postlink>>">Read more...</a>
+			</div>
+<</foreach>>
 		</div>
 	</div>
 	<div class=col2>
@@ -220,16 +248,5 @@ form.compact {
 		</div>
 	</div>
 
-	<div class="posttools <<show_post_tools?>>">
-		<a class=button href="-/blog/edit?post=<<postid>>">Edit</a>
-		<form class="compact ifnotpublished" action="-/blog/publish" use-autoloader=1 method=POST>
-			<input type=hidden name=post value="<<postid>>">
-			<button type=submit>Publish</button>
-		</form>
-		<form class="compact ifpublished" action="-/blog/unpublish" use-autoloader=1 method=POST>
-			<input type=hidden name=post value="<<postid>>">
-			<button type=submit>Unpublish</button>
-		</form>
-	</div>
 
 </div>

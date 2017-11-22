@@ -548,8 +548,8 @@ class SqlShadow implements
 	public function offsetSet( $offset, $value )
 	{
 		if( !is_null( $offset ) ) {
-			if (array_key_exists( $offset, $this->data )
-		 		&& $this->data[ $offset ] !== $value) {
+			if (!array_key_exists( $offset, $this->data )
+		 		|| $this->data[ $offset ] !== $value) {
 				$this->dirty[ $offset ] = true;
 			}
 			$this->data[ $offset ] = $value;
@@ -580,8 +580,8 @@ class SqlShadow implements
 	public function __set( $offset, $value )
 	{
 		if( !is_null( $offset ) ) {
-			if (array_key_exists( $offset, $this->data )
-		 		&& $this->data[ $offset ] !== $value) {
+			if (!array_key_exists( $offset, $this->data )
+		 		|| $this->data[ $offset ] !== $value) {
 				$this->dirty[ $offset ] = true;
 			}
 			$this->data[ $offset ] = $value;

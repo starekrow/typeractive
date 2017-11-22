@@ -1,0 +1,103 @@
+<style type="text/css">
+
+.pages {
+	width: 80%;
+	max-width: 1000;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+
+.pages table {
+	width: 100%;
+	text-align: left;
+	background-color: #e6e1dd;
+	border-radius: 8px;
+}
+
+.pages th {
+	text-align: center;
+}
+
+.pages h2, .pages h3 {
+	text-align: center;
+}
+
+.pages .title {
+}
+.pages .mtime {
+	white-space: nowrap;
+	width: 20%;
+}
+
+
+@media all and (max-width:600px) {
+	.pages {
+		width: 95%;
+	}
+	.pages td.title {
+		padding: 10px 0px;
+	}
+}
+
+.backbtn {
+	margin-top: 10px;
+	margin-left: 20px;
+}
+
+.noentries {
+	font-style: italic;
+	padding: 30px 0px;
+	text-align: center;
+}
+
+</style>
+
+<a class="backbtn compact button" href="<<backlink>>" onclick="history.go(-1);return false;">
+	<svg class=glyph><use xlink:href="#svg-arrow-left"></use></svg>Back
+</a>
+
+
+<div class=pages>
+	<h2>Pages</h2>
+	<div>
+		<a class=button href="-/pages/new">New Page</a>
+	</div>
+	<table>
+	<tr><th class=pageid>ID<th class=title>Name<th class=mtime>Modified
+
+<<foreach:pagelist>>
+	<tr>
+		<td class=pageid><<pageid>>
+		<td class=title>
+			<a href="-/pages/edit?page=<<pageid>>"><<title>></a> 
+		<td class=mtime> <<mtime>> 
+<</foreach>>
+<<ifempty:pagelist>>
+	<tr><td colspan=3 class=noentries>No Entries
+<</if>>
+	</table>
+
+	<h2>Links</h2>
+
+	<div>
+		<a class=button href="-/pages/newlink">New Link</a>
+	</div>
+
+	<table>
+	<tr><th class=pageid>Link ID<th class=title>Path<th class=pageid>Page ID
+
+<<foreach:linklist>>
+	<tr>
+		<td class=pageid> <<linkid>>
+		<td class=path>
+			<a href="-/pages/editlink?link=<<linkid>>"><<path>></a> 
+		<td class=pageid> <<pageid>>
+<</foreach>>
+<<ifempty:linklist>>
+	<tr><td colspan=3 class=noentries>No Entries
+<</if>>
+
+	</table>
+</div>
+

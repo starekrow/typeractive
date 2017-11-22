@@ -276,13 +276,14 @@ svg {
 <div id=siteheader_full>
 	<div id=siteheader_bar>
 		<ul>
-			<li><a href="<<approot>>/"       		>
-					<span class=sitename>MetalCoder</span><span class=tld>.com</span>
-				</a>	
-			<li><a href="<<approot>>/starekrow"    >Blog</a>
-			<li><a href="<<approot>>/projects"		>Projects</a>
-			<li><a href="<<approot>>/about"   		>About</a>
-			<li><a href="<<approot>>/signin"  		
+			<li><a href="<<approot>>/">
+					<span class=sitename><<sitename>></span
+					><span class=tld><<sitename_tld>></span>
+				</a>
+<<foreach:sitemenu>>
+			<li><a href="<<link>>"><<label>></a>
+<</foreach>>
+			<li><a href="signin"  		
 					id=siteheader_bar_account
 					onclick="click_account(); return false;">
 					<svg id=siteheader_bar_noavatar class=icon>
@@ -328,7 +329,7 @@ svg {
 
 	<!-- login dialog/form -->
 	<form id=siteheader_login_form action="-/login" use-autoloader=1 method=POST>
-		<div class=dialog_title>MetalCoder</div>
+		<div class=dialog_title><<sitename>></div>
 		<div class=dialog_subtitle>Sign In</div>
 		<div class=fields>
 			<div>
@@ -346,7 +347,7 @@ svg {
 			</button>
 		</div>
 		<div>
-			<a href="<<approot>>/recover_password">Forgot Password?</a>
+			<a href="recover_password">Forgot Password?</a>
 		</div>
 	</form>
 

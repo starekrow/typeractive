@@ -12,7 +12,7 @@ Serves a user's dashboard.
 ================================================================================
 */
 
-class DashboardServer extends PageServer
+class DashboardServer extends HtmlServer
 {
 	/*
 	=====================

@@ -12,7 +12,7 @@ Creates drafts, edits pages and works with the history
 ================================================================================
 */
 
-class BlogEditor extends PageServer
+class BlogEditor extends HtmlServer
 {
 	public $blog;
 

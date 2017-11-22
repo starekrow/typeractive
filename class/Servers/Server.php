@@ -140,63 +140,6 @@ class Server
 		return $this->Reply( $value );
 	}
 
-
-	/*
-	=====================
-	EmitSiteFrame
-
-	Renders a "standard" site page with the given HTML.
-	The page includes basic support script and css, a loader mask, and a site
-	header with menu/identity block.
-	=====================
-	*/
-	public function EmitSiteFrame( $parts )
-	{
-		$frm = file_get_contents( "res/site_frame.html" );
-		$css = file_get_contents( "res/site_frame.css" );
-		$js = file_get_contents( "res/main.js" );
-		$hdr = file_get_contents( "res/site_header.html" );
-		$ftr = file_get_contents( "res/site_footer.html" );
-		$ext = file_get_contents( "res/ext_dialog.html" );
-
-		/* Note: At some point it would be possible to parse out the various 
-		   embedded <style> tags and move them to the head, but meh. */
-
-		$parts = (object)$parts;
-		$body = empty( $parts->html ) ? "" : $parts->html;
-		if (!empty( $parts->js )) {
-			$js .= $parts->js;
-		}
-		if (!empty( $parts->css )) {
-			$css .= $parts->css;
-		}
-		$title = empty( $parts->title ) ? "Untitled" : $parts->title;
-
-		$hdr = str_replace( "{{approot}}", Http::$appRootUrl, $hdr );
-		$ftr = str_replace( "{{approot}}", Http::$appRootUrl, $ftr );
-
-		$out = str_replace( [
-				"{{header}}",
-				"{{css}}",
-				"{{script}}",
-				"{{footer}}",
-				"{{title}}",
-				"{{body}}",
-				"{{html-extensions}}"
-			], [
-				$hdr,
-				$css,
-				$js,
-				$ftr,
-				$title,
-				$body,
-				$ext
-			], 
-			$frm
-		 );
-		$this->ReplyHtml( $out );
-	}
-
 	/*
 	=====================
 	DefaultReplyType
