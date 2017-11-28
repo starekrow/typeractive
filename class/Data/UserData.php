@@ -78,6 +78,64 @@ class UserData
 
 	/*
 	=====================
+	CheckPriv
+	=====================
+	*/
+	public function CheckPriv( $type )
+	{
+		$auth = new SqlShadow( "auth" );
+		//$auth->userid = $this->id;
+		$auth->method = "grant:$type";
+		$auth->methodkey = "to:" . $this->id;
+		if (!$auth->Load()) {
+			return false;
+		}
+		return (object) [
+			 "user" => $auth->userid
+			,"type" => $type
+			,"data" => unserialize( $auth->token1 )
+			,"extra" => unserialize( $auth->token2 )
+			,"expires" => $auth->ParseDateTime( $auth->expires )
+		];
+		return self::VerifyPassword( $password, $auth->token1 );
+	}
+
+	/*
+	=====================
+	GrantPriv
+	=====================
+	*/
+	public function GrantPriv( $type, $data = null, $extra = null )
+	{
+		$auth = new SqlShadow( "auth" );
+		$auth->method = "grant:$type";
+		$auth->methodkey = "to:" . $this->id;
+		if (!$auth->Load()) {
+			$auth->userid = $this->id;
+		}
+		$auth->token1 = serialize( $data );
+		$auth->token2 = serialize( $extra );
+		return $auth->Flush();
+	}
+
+	/*
+	=====================
+	RevokePriv
+	=====================
+	*/
+	public function RevokePriv( $type )
+	{
+		$auth = new SqlShadow( "auth" );
+		$auth->method = "grant:$type";
+		$auth->methodkey = "to:" . $this->id;
+		if (!$auth->Load()) {
+			return false;
+		}
+		$auth->Delete();
+	}
+
+	/*
+	=====================
 	CheckPassword
 	=====================
 	*/

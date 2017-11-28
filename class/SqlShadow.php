@@ -72,6 +72,9 @@ class SqlShadow implements
 	*/
 	public function ParseDateTime( $val )
 	{
+		if ($val === null) {
+			return $val;
+		}
 		return strtotime( $val );
 	}
 
@@ -386,6 +389,9 @@ class SqlShadow implements
 		$db = Sql::AutoConnect();
 		$qtbl = $db->QuoteName( $this->table );
 		$ai = $this->def->autoindex;
+		if (is_object( $options )) {
+			$options = (array) $options;
+		}
 		if ($fields === null) {
 			$fields = $this->data;
 		}
@@ -402,10 +408,19 @@ class SqlShadow implements
 				$sql = $this->CalcLoadSql( $fields );
 			}
 		}
-		if (!$fields || !$sql) {
-			return false;
-		}
+		//if (!$fields || !$sql) {
+		//	return false;
+		//}
 		$sql = "SELECT * FROM $qtbl $sql";
+		if (isset( $options["limit"] )) {
+			$sql .= " LIMIT ";
+			if (isset( $options["offset"] )) {
+				$sql .= ((int)$options["offset"]) . ",";
+				$fields[ "whr_off" ] = $options["offset"];
+			}
+			//$fields[ "whr_limit" ] = $options["limit"];
+			$sql .= ((int)$options["limit"]);
+		}
 		$db = Sql::AutoConnect();
 		$got = $db->query( $sql, $fields );
 		if (!$got) {
@@ -438,47 +453,151 @@ class SqlShadow implements
 
 	/*
 	=====================
+	CompileTest
+	=====================
+	*/
+	protected function CompileTest( $subject, $test )
+	{
+		if (!is_array( $test )) {
+			return $this->CompileTest( $subject, [ "=", $test ] );
+		}
+		$db = Sql::AutoConnect();
+		$out = ["("];
+		$ss = $db->QuoteName( $subject );
+		$spacer = "";
+		for ($i = 0; $i < count( $test ); ++$i) {
+			$out[] = $spacer;
+			$spacer = " ";
+			$op = $test[ $i ];
+			if ($i + 1 >= count( $test )) {
+				// no unary ops yet
+				return false;
+			}
+			$v = $test[ $i + 1 ];
+			if (is_string( $v )) {
+				$v = $db->QuoteString( $v );
+			} else if ($v === true) {
+				$v = "TRUE";
+			} else if ($v === false) {
+				$v = "FALSE";
+			} else if (is_numeric( $v )) {
+				$v = "$v";
+			}
+			++$i;
+			switch ($op) {
+			case "=";
+				if ($v === null) {
+					$out[] = "$ss IS NULL";
+				} else {
+					$out[] = "$ss $op $v";
+				}
+				break;
+			case "!=";
+				if ($v === null) {
+					$out[] = "$ss IS NOT NULL";
+				} else {
+					$out[] = "$ss $op $v";
+				}
+				break;
+			case "<";
+			case ">";
+			case "<=";
+			case ">=";
+				$out[] = "$ss $op $v";
+				break;
+			default:
+				return false;
+			}
+			if ($i + 1 < count($test)) {
+				if ($test[$i + 1] == "and") {
+					$out[] = " and ";
+					++$i;
+				} else if ($test[$i + 1] == "or") {
+					$out[] = " or ";
+					++$i;
+				} else /* implicit and */ {
+					$out[] = " and ";
+				}
+			}
+		}
+		$out[] = ")";
+		return implode( "", $out );
+	}
+
+	/*
+	=====================
+	CompileWhere
+	=====================
+	*/
+	protected function CompileWhere( $cond )
+	{
+		if (!$cond || (is_array( $cond ) && !count( $cond ))) {
+			return "1";
+		} else if (is_array( $cond ) && !empty( $cond[0] )) {
+			// multiple matches at top level
+			$out = [];
+			foreach ($cond as $k => $v) {
+				$out[] = $this->CompileWhere( $cond );
+			}
+			return "(" . implode(") OR (", $out) . ")";
+		}
+		$tests = [];
+		foreach ($cond as $k => $v) {
+			$tests[] = $this->CompileTest( $k, $v );
+		}
+		return "(" . implode(") AND (", $tests ) . ")";
+	}
+
+	/*
+	=====================
 	Update
 	=====================
 	*/
-	public function Update()
+	public function Update( $options = null )
 	{
 		$ai = $this->def->autoindex;
 		$d = $this->data;
-		if (isset( $d[ $ai ] )) {
-			if (!$this->allDirty) {
-				unset( $this->dirty[ $ai ] );
-				if (count( $this->dirty ) == 0) {
-					return 0;
-				}
-			}
-			$db = Sql::AutoConnect();
-			$qtbl = $db->QuoteName( $this->table );
-			// hmm? $this->FillDefaults();
-			$sql = "UPDATE $qtbl SET ";
-			$stitch = "";
-			$args = [ "$ai" => $this->data[ $ai ] ];
-			foreach ($d as $col => $v) {
-				if ($col == $ai || 
-					(!$this->allDirty && empty($this->dirty[ $col ]))) {
-					continue;
-				}
-				$qcol = $db->QuoteName( $col );
-				$args[ $col ] = $v;
-				$sql .= "$stitch$qcol=:$col";
-				$stitch = ",";
-			}
-			$qai = $db->QuoteName( $ai );
-			$sql .= " WHERE $qai=:$ai";
-			$got = $db->query( $sql, $args );
-			if ($got !== false) {
-				$this->dirty = [];
-				$this->allDirty = false;
-			}
-			return $got;
+		if ($options && !is_array( $options )) {
+			$options = (array) $options;
 		}
-		// TODO: update with other index
-		return false;
+		if (!$this->allDirty) {
+			unset( $this->dirty[ $ai ] );
+			if (count( $this->dirty ) == 0) {
+				return 0;
+			}
+		}
+		$ai = $this->def->autoindex;
+		$args = [];
+		if (!empty( $options[ "where" ] )) {
+			$where = $this->CompileWhere( $options[ "where" ] );
+		} else if ($ai && isset( $d[ $ai ] )) {
+			$where = $db->Quotename( $ai ) . "=:$ai";
+			$args[ $ai ] = $this->data[ $ai ];
+		} else {
+			return false;
+		}
+		$db = Sql::AutoConnect();
+		$qtbl = $db->QuoteName( $this->table );
+		// hmm? $this->FillDefaults();
+		$sql = "UPDATE $qtbl SET ";
+		$stitch = "";
+		foreach ($d as $col => $v) {
+			if ($col == $ai || 
+				(!$this->allDirty && empty($this->dirty[ $col ]))) {
+				continue;
+			}
+			$qcol = $db->QuoteName( $col );
+			$args[ $col ] = $v;
+			$sql .= "$stitch$qcol=:$col";
+			$stitch = ",";
+		}
+		$sql .= " WHERE " . $where;
+		$got = $db->exec( $sql, $args );
+		if ($got !== false) {
+			$this->dirty = [];
+			$this->allDirty = false;
+		}
+		return $got;
 	}
 
 	/*

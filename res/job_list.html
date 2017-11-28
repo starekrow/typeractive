@@ -1,0 +1,41 @@
+<style type="text/css">
+
+.joblist {
+	margin-left: 10%;
+	margin-right: 10%;
+}
+
+.joblist > table {
+	margin-left: 10%;
+	margin-right: 10%;
+}
+
+
+@media all and (max-width:600px) {	
+	.joblist {
+		margin: 0 5% 0 5%;
+	}
+}
+
+</style>
+
+<div class=joblist>
+
+<h2>Jobs</h2>
+
+<table>
+	<th>ID<th>State<th>Type<th>Starts<th>Command
+<<foreach:jobs>>
+	<tr>
+		<td><<id>>
+		<td><<state>>
+		<td><<type>>
+		<td><<start>>
+		<td><<command>>
+<</foreach>>
+<<ifempty:jobs>>
+	<tr><td colspan=5 class=noentries>No Entries
+<</if>>
+</table>
+
+</div>

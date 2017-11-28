@@ -76,11 +76,12 @@ class BlogServer extends HtmlServer
 		
 		$toks->postid = $post->id;
 		$toks->dateline = $dl;
-		$toks->mainpost = $md->text( $text );
+		$text = $md->text( $text );
 		$toks->bio = $md->text( $blog->GetBiography() );
 		$toks->header = $blog->GetHeader();
 		$toks->title = $post->GetTitle();
 		$toks->toclist = self::GetToc( $blog );
+		$toks->mainpost = self::ReplaceAngTokens( $text, $toks );
 		return new Dict( [
 			 "tokens" => $toks
 			,"html" => file_get_contents( "res/blog_viewpost.html" )
@@ -92,6 +93,8 @@ class BlogServer extends HtmlServer
 	/*
 	=====================
 	MainPage
+
+	Render a summary of the latest few posts
 	=====================
 	*/
 	function MainPage()
@@ -125,6 +128,7 @@ class BlogServer extends HtmlServer
 
 			$block = new Dict();
 			$block->postid = $post->id;
+			$block->postlink = $el["link"];
 			$block->dateline = $dl;
 			$block->title = $post->GetTitle();
 			$text = $this->ReplaceAngTokens( $md->text( $text ), $block );
@@ -157,7 +161,10 @@ class BlogServer extends HtmlServer
 		Http::StopClientCache();
 		$id = $this->request->id;
 		$key = "full_post_" . $id;
-		if (!Cache::lock( $key, 0, $val, 30, 10 )) {
+		if (isset( $this->args->nocache ) && !empty( $_SESSION['userid'] )) {
+			$key = null;
+		}
+		if ($key && !Cache::lock( $key, 0, $val, 30, 10 )) {
 			$val = $val ? $val : Cache::wait( $key, 10 );
 			if (!$val) {
 				$this->html = "Error retrieving post. Please try again.";
@@ -167,8 +174,10 @@ class BlogServer extends HtmlServer
 			$post = PostData::Load( $id );
 			$blog = BlogData::Load( $post->GetBlogId() );
 			$val = self::RenderPost( $blog, $post );
-			Cache::set( $key, $val, 300 );		// 5 minutes
-			Cache::unlock( $key );
+			if ($key) {
+				Cache::set( $key, $val, 300 );		// 5 minutes
+				Cache::unlock( $key );
+			}
 		}
 		$got = new Dict( $val );
 		$this->tokens->Merge( $got->tokens );

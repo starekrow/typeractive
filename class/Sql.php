@@ -78,12 +78,11 @@ class Sql
 				error_log( "DB Connection failed" );
 				return $instance;
 			}
-			if ($c[ 'encoding' ]) {
-				$instance->SetPreferredEncoding( $c[ 'encoding' ] );
-			}
 			if ($c[ 'database' ]) {
 				$instance->UseDatabase( $c[ 'database' ] );
 			}
+			// do everything in UTC
+			$instance->RunQuery( "SET time_zone='+00:00'" );
 		}
 		return $instance;
 	}
@@ -105,7 +104,6 @@ class Sql
 			,'password' => ''
 			,'host' => null
 			,'port' => null
-			,'encoding' => null
 			,'database' => null
 		];
 		foreach ($config as $k => $v) {
@@ -130,7 +128,7 @@ class Sql
 				$port = 3306;
 			}
 			$db = new \PDO(
-				"mysql:host=$host;port=$port",
+				"mysql:host=$host;port=$port;charset=binary",
 				$user,
 				$password
 			);

@@ -186,7 +186,7 @@ class HtmlServer extends Server
 
 		echo "</div></div>";
 
-		readfile( "res/site_footer.html" );
+		//readfile( "res/site_footer.html" );
 
 		echo "</body></html>";
 

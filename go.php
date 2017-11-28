@@ -292,6 +292,8 @@ function Launch()
 		return BlogEditor::Handle( $req );
 	case "-pages":
 		return PageEditor::Handle( $req );
+	case "-job":
+		return JobServer::Handle( $req );
 	case "blogpost":
 		return BlogServer::Handle( $req );
 	case "blogmain":
