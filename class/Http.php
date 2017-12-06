@@ -19,6 +19,7 @@ class Http
 	public static $fullPath;
 	public static $path;
 	public static $host;
+	public static $scheme;
 	public static $query;
 	public static $queryString;
 	public static $secure;
@@ -157,7 +158,7 @@ class Http
 		$uparts = explode( "?", $url );
 		self::$queryString = count($uparts) > 1 ? $uparts[1] : null;
 		self::$secure = !empty( $_SERVER['HTTPS'] );
-		$scheme = self::$secure ? 'https' : 'http';
+		$scheme = Http::$scheme = self::$secure ? 'https' : 'http';
 		$host = self::$host = $_SERVER['HTTP_HOST'];
 		self::$url = "$scheme://$host$url";
 		self::$fullPath = $uparts[0];

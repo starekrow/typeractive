@@ -41,7 +41,7 @@ class BlogServer extends HtmlServer
 				,"link" => htmlspecialchars( $elink )
 				,"id" => $el->id
 				,"date" => date("M j", $el->GetPostTimestamp() )
-				,"fullpost" => $el
+				//,"fullpost" => $el
 			];
 		}
 		return $opl;
@@ -75,6 +75,7 @@ class BlogServer extends HtmlServer
 		}
 		
 		$toks->postid = $post->id;
+		$toks->blogid = $blog->id;
 		$toks->dateline = $dl;
 		$text = $md->text( $text );
 		$toks->bio = $md->text( $blog->GetBiography() );
@@ -101,15 +102,21 @@ class BlogServer extends HtmlServer
 	{
 		$id = $this->request->id;
 		$blog = BlogData::Load( $id );
-		$toc = self::GetToc( $blog );
-		$tocl = array_slice( $toc, 0, 5 );
+
+		$posts = $blog->ListPosts( "published" );
+		$posts = array_slice( $posts, 0, 5 );
 		$md = new \Parsedown();
 
 		$toks = new Dict();
 		$teasers = [];
 
-		foreach ($tocl as $el) {
-			$post = $el["fullpost"];
+		foreach ($posts as $el) {
+			$post = $el;
+
+			$lid = $post->GetLinkId();
+			if (!$lid) {
+				continue;
+			}
 
 			$text = $post->GetText();
 			$text = explode( "\n", $text );
@@ -126,9 +133,12 @@ class BlogServer extends HtmlServer
 				$dl = $pdate;
 			}
 
+			$link = LinkData::Load( $lid );
+			$elink = substr( $link->GetLink(), 1 );
+
 			$block = new Dict();
 			$block->postid = $post->id;
-			$block->postlink = $el["link"];
+			$block->postlink = htmlspecialchars( $elink );
 			$block->dateline = $dl;
 			$block->title = $post->GetTitle();
 			$text = $this->ReplaceAngTokens( $md->text( $text ), $block );
@@ -160,7 +170,7 @@ class BlogServer extends HtmlServer
 		}
 		Http::StopClientCache();
 		$id = $this->request->id;
-		$key = "full_post_" . $id;
+		$key = "full_post_" . $id . ":v3";
 		if (isset( $this->args->nocache ) && !empty( $_SESSION['userid'] )) {
 			$key = null;
 		}
@@ -180,6 +190,16 @@ class BlogServer extends HtmlServer
 			}
 		}
 		$got = new Dict( $val );
+		Logs::Put( "views", json_encode( [
+			"blogpost",
+			$id,
+			$got->tokens->blogid,
+			Http::$timestamp,
+			Http::$scheme . "://" . Http::$host . Http::$path,
+			Http::$queryString,
+			Http::$referrer,
+			Http::$source
+		], JSON_UNESCAPED_SLASHES ));
 		$this->tokens->Merge( $got->tokens );
 		$this->html = $got->html;
 

@@ -83,8 +83,9 @@ class Cache
 	public static function setx( $key, $value, $ttl = null )
 	{
 		if (self::$cache) {
-			self::$cache->setx( $key, $value, $ttl );
+			return self::$cache->setx( $key, $value, $ttl );
 		}
+		return false;
 	}
 
 	/*

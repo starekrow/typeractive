@@ -79,7 +79,11 @@ class JobData
 	*/
 	public function SetData( $data )
 	{
-		$this->record->data = serialize( $data );
+		if ($data === null) {
+			$this->record->data = null;
+		} else {
+			$this->record->data = serialize( $data );
+		}
 	}
 
 	/*
@@ -89,6 +93,9 @@ class JobData
 	*/
 	public function GetData()
 	{
+		if ($this->record->data === null) {
+			return null;
+		}
 		return unserialize( $this->record->data );
 	}
 
@@ -175,8 +182,9 @@ class JobData
 		$rec->state = "running";
 		$limit = $rec->runlimit ? $rec->runlimit : 300;
 		$rec->expires = $rec->DateTime( time() + $limit );
-		$did = $rec->Update([ "where" => [ 
-			"jobid" => $rec->jobid, "state" => "ready" ]]);
+		$did = $rec->Update([ 
+			"jobid" => $rec->jobid, 
+			"state" => "ready"]);
 		if (!$did) {
 			return $did;
 		}
@@ -206,8 +214,9 @@ class JobData
 		} else {
 			$rec->expires = time() + 24 * 60 * 60;
 		}
-		$did = $rec->Update([ "where" => [ 
-			"jobid" => $rec->jobid, "state" => "running" ]]);
+		$did = $rec->Update([ 
+			"jobid" => $rec->jobid, 
+			"state" => "running" ]);
 		if ($did) {
 			$this->state = $rec->state;
 			$this->expires = $rec->expires;
@@ -238,6 +247,9 @@ class JobData
 	public static function Find( $fields, $options = NULL )
 	{
 		$rec = new SqlShadow( "jobs" );
+		if ($fields == "*") {
+			$fields = [ "*filter" => [] ];
+		}
 		$got = $rec->Find( $fields, $options );
 		if (!$got) {
 			return false;
@@ -256,7 +268,10 @@ class JobData
 	public static function LoadReady( $max = null )
 	{
 		$rec = new SqlShadow( "jobs" );
-		$got = $rec->Find( [ "state" => "ready" ], [ "limit" => $max ] );
+		$got = $rec->Find( [ 
+			"state" => "ready",
+		 	"*limit" => $max,
+		 	"*order" => "start" ] );
 		if (!$got) {
 			return false;
 		}

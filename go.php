@@ -34,6 +34,8 @@ class ClassLoader
 					include( "class/Data/$name.php" );
 				} else if (substr( $name, -6 ) == "Server") {
 					include( "class/Servers/$name.php" );
+				} else if (substr( $name, -3 ) == "Job") {
+					include( "class/Jobs/$name.php" );
 				}
 			}
 		} else {
@@ -259,6 +261,11 @@ function Launch()
 	SqlShadow::DefineTable( "text", ["autoindex" => "textid"] );
 	SqlShadow::DefineTable( "pages", ["autoindex" => "pageid"] );
 	SqlShadow::DefineTable( "posts", ["autoindex" => "postid"] );
+	SqlShadow::DefineTable( "views", ["autoindex" => "viewid"] );
+	SqlShadow::DefineTable( "viewtext", ["autoindex" => "vtid"] );
+	SqlShadow::DefineTable( "jobs", ["autoindex" => "jobid"] );
+	SqlShadow::DefineTable( "priv_lookup", ["autoindex" => "privid"] );
+	SqlShadow::DefineTable( "priv_grant", ["autoindex" => "grantid"] );
 
 	Cache::setDefault( "file" );
 	

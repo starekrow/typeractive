@@ -28,6 +28,32 @@ privileges.
 
 class JobServer extends HtmlServer
 {
+	// How long to allow any one job to run
+	const MAX_JOB_TIME = 3600;
+	// How long to allow a single tick request to run
+	const MAX_TICKER = 300;
+	// Expire the tick request lock a little bit early
+	const TICK_UNLOCK_OFFSET = 15;
+	// Seconds between automatic job pickup
+	const TICK_INTERVAL = 30;
+
+	/*
+	=====================
+	Schedule
+	=====================
+	*/
+	static function Schedule( $name, $type, $command, $delay = 0, 
+		$data = null, $runlimit = null, $repeat = null )
+	{
+		$j = JobData::Create( $type );
+		$j->SetName( $name );
+		$j->SetCommand( $command );
+		$j->SetData( $data );
+		$j->SetRunLimit( $runlimit );
+		$j->SetRepeat( $repeat );
+		$j->Schedule( time() + $delay );
+	}
+
 
 	/*
 	=====================
@@ -52,42 +78,62 @@ class JobServer extends HtmlServer
 	*/
 	function cmd_tick( $path )
 	{
-		$job = JobData::LoadReady(1);
-		if (!$job) {
-			return $this->tick_reply( null );
-		}
-		$job = $job[0];
-		if ($job->start > time()) {
-			return $this->tick_reply( $job->start - time() );
-		}
-		if (!$job->Start()) {
-			return $this->tick_reply( 0 );
+		// allow up to an hour before the process gets killed (hopefully)
+		set_time_limit( self::MAX_JOB_TIME );
+		$runtime = 0;
+		$until = time();
+		if ($this->args->runtime) {
+			$runtime = min( (int) $this->args->runtime, self::MAX_TICKER );
+			$until += $runtime;
+			if (!Cache::setx( "jobs_tick_watcher", 1, 
+								$until - self::TICK_UNLOCK_OFFSET )
+			   ) {
+				$until -= $runtime;
+			}
 		}
 
-		try {
-			$tp = $job->type;
-			$tp = strtoupper( $tp[0] ) . strtolower( substr( $tp, 1 ) ) . "Job";
-			$tp = "Typeractive\\$tp";
-			if (!class_exists( $tp )) {
-				// ack!
-				error_log( "Unknown job type " . $job->type );
-				return $this->tick_reply( 0 );
+		$wait = false;
+		do {
+			if ($wait) {
+				sleep( $wait );
 			}
-			ob_start();
-			$jc = new $tp( $job );
-			$jc->Go();
-			ob_end_clean();
-		} catch (Exception $e) {
-			error_log( "job " . $job->id . " failed: " . $e->getMessage() );
-			if (!$job->GetRepeat()) {
-				$job->SetState( "error" );
-				return;
+			$wait = max(min($until - time() - 1, self::TICK_INTERVAL), 1);
+			$job = JobData::LoadReady(1);
+			if (!$job) {
+				continue;
 			}
-		}
-		if ($job->state == "running") {
-			$job->Finish();
-		}
-		return $this->tick_reply( 0 );
+			$job = $job[0];
+			if ($job->start > time()) {
+				$wait = min( $wait, $job->start - time() + 1 );
+				continue;
+			}
+			if (!$job->Start()) {
+				continue;
+			}
+			try {
+				$tp = $job->type;
+				$tp = strtoupper( $tp[0] ) . strtolower( substr( $tp, 1 ) );
+				$tp = "Typeractive\\{$tp}Job";
+				if (!class_exists( $tp )) {
+					throw new \Exception( "Unknown job type " . $job->type );
+				}
+				ob_start();
+				$jc = new $tp( $job );
+				$jc->Start();
+				ob_end_clean();
+				$job->Finish();
+			} catch (\Exception $e) {
+				error_log( "job " . $job->id . " failed: " . $e->getMessage() );
+				if ($job->GetRepeat()) {
+					$job->SetState( "ready" );
+				} else {
+					$job->SetState( "error" );
+				}
+				$job->Save();
+			}
+			$wait = false;
+		} while (time() < $until);
+		return $this->tick_reply( $wait );
 	}		
 
 	/*
@@ -97,7 +143,7 @@ class JobServer extends HtmlServer
 	*/
 	function cmd_list( $path )
 	{
-		$jobs = JobData::Find( [] );
+		$jobs = JobData::Find( "*" );
 		//$job = JobData::LoadReady();
 		if (!$jobs) {
 			$jobs = [];

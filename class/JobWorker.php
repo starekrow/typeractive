@@ -12,7 +12,7 @@ Superclass for jobs.
 ================================================================================
 */
 
-class JobWorker
+abstract class JobWorker
 {
 	protected $job;
 	protected $command;
@@ -29,6 +29,13 @@ class JobWorker
 		$this->id = $job->id;
 		$this->command = $job->command;
 		$this->data = $job->GetData();
-		$this->jobRecord = $job;
+		$this->job = $job;
 	}
+
+	/*
+	=====================
+	Start
+	=====================
+	*/
+	abstract function Start();
 }

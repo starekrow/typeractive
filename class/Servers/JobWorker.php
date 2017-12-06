@@ -5,22 +5,30 @@ namespace Typeractive;
 /*
 ================================================================================
 
-TestJob
+JobWorker
 
-Test worker for jobs
+Superclass for jobs.
 
 ================================================================================
 */
 
-class TestJob extends JobWorker
+class JobWorker
 {
+	protected $job;
+	protected $command;
+	protected $data;
+	public $id;
+
 	/*
 	=====================
-	Start
+	__construct
 	=====================
 	*/
-	function Start()
+	function __construct( $job )
 	{
-		error_log( "Test job ran!" );
+		$this->id = $job->id;
+		$this->command = $job->command;
+		$this->data = $job->GetData();
+		$this->jobRecord = $job;
 	}
 }

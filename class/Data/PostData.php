@@ -2,6 +2,10 @@
        ********************************************************/
 namespace Typeractive;
 
+// TODO: make these
+// require_once( "polyfills/random_bytes.php" );
+// require_once( "polyfills/hash_equals.php" );
+
 /*
 ================================================================================
 
@@ -17,6 +21,11 @@ class PostData
 	public $id;
 	protected $record;
 	protected $text;
+
+	// how long an issued access key will last, in seconds.
+	// This is used for such things as commenting on posts (so you can only
+	// comment if you can prove that you've seen the post).
+	const DEFAULT_ACCESS_TTL = 24 * 3600;
 
 	/*
 	=====================
@@ -326,6 +335,67 @@ class PostData
 	{
 		$this->record->Flush();
 	}
+
+	/*
+	=====================
+	GetAccessKey
+
+	Returns a key that can be used to verify that you are allowed to interact 
+	with this post.
+	=====================
+	*/
+	public function GetAccessKey( $type, $ttl = 3600 * 24 )
+	{
+		global $gSecrets;
+		$postkey = $gSecrets->Get( "postkey" );
+		if (!$postkey) {
+			$postkey = random_bytes(32);
+			$gSecrets->Put( "postkey", $postkey );
+		}
+		$dat = $this->id . ":" . (time() + $ttl);
+		$sig = hash_hmac( "sha256", $dat, $postkey, true );
+		return base64_encode( $dat ) . ":" . base64_encode( $sig );
+	}
+
+	/*
+	=====================
+	CheckAccessKey
+
+	Checks a given key. If valid, returns the post ID it specifies.
+	=====================
+	*/
+	public static function CheckAccessKey( $key, $type )
+	{
+		global $gSecrets;
+		if (!is_string( $key )) {
+			return false;
+		}
+		$keysig = explode( ":", $key );
+		if (count( $keysig ) != 2) {
+			return false;
+		}
+		$got = base64_decode( $keysig[0] );
+		$sig = base64_decode( $keysig[1] );
+
+		$postkey = $gSecrets->Get( "postkey" );
+		if (!$postkey) {
+			return false;
+		}
+		$vfy = hash_hmac( "sha256", $got, $postkey, true );
+		if (!hash_equals( $vfy, $sig )) {
+			return false;
+		}
+		$got = explode( ":", $got );
+		if (count( $got ) != 2) {
+			return false;
+		}
+		if ((double)$got[1] < time()) {
+			return false;
+		}
+		return $got[0];
+	}
+
+
 
 	/*
 	=====================

@@ -53,6 +53,12 @@
 	font-size: 1.5em;
 	margin: 0;
 	font-weight: bold;
+	color: <<defaultfg>>;
+	text-decoration: none;
+}
+
+.blog a:hover .title {
+	text-decoration: none;
 }
 
 .blog h1 {
@@ -219,9 +225,11 @@ form.compact {
 	<div class=col1>
 		<div class=blog>
 <<foreach:teasers>>			
-			<div class=title>
-				<<title>>
-			</div>
+			<a href="<<postlink>>">
+				<div class=title>
+					<<title>>
+				</div>
+			</a>
 			<div class=dateline>
 				<<dateline>>
 			</div>

@@ -5,15 +5,180 @@ namespace Typeractive;
 /*
 ================================================================================
 
-BlogEditor
+CommentServer
 
 Creates drafts, edits pages and works with the history
 
 ================================================================================
 */
 
-class BlogEditor extends HtmlServer
+class CommentServer extends AjaxServer
 {
+	const COMMENTS_PER_PAGE = 50;
+
+	/*
+	=====================
+	ShowError
+	=====================
+	*/
+	public function ShowError( $str )
+	{
+		return [
+			"run" => 'login_error(' .
+					json_encode( $str ) .
+				");"
+		];
+	}
+
+
+	/*
+	=====================
+	PrepGuestText
+
+	Comments by guests (or unverified users) only support a limited subset of 
+	markdown. Pretty much just:
+
+	Paragraph lines are folded as expected, with 
+	*italic* and **bold** text.	Other text styles 
+	include `code`, ~~strikethrough~~, 
+	^^superscript^^, ,,subscript,,.
+
+	Links are not allowed at all. Things that look like 
+	links will be reformatted as "hxxp host path?query". 
+
+	Control characters except TAB will be removed.
+
+	Entities are supported, except any unrecognized entities will be rewritten
+	to expose them. No raw tags are allowed at all.
+
+	    Preformatted text block
+
+	* bullets
+	  with indenting
+	* and more bullets
+
+	> blockquotes
+
+	=====================
+	*/
+	public function PrepGuestText( $text )
+	{
+	}
+
+	/*
+	=====================
+	cmd_add
+
+	Adds a new comment to a post
+	=====================
+	*/
+	public function cmd_add( $path )
+	{
+
+	}
+
+
+
+	/*
+	=====================
+	cmd_load
+	=====================
+	*/
+	public function cmd_load( $path )
+	{
+		if (count( $path )) {
+			return [ "result" => false ];
+		}
+		$post = PostData::CheckAccessKey( $this->args->post );
+		if (!$post) {
+			return [
+				"result" => "<i>Unable to load comments (BadKey)</i>"
+			];
+		}
+		$post = PostData::Load( $post );
+		if (!$post) {
+			return [
+				"result" => "<i>Unable to load comments (BadPost)</i>"
+			];
+		}
+		$cursor = null;
+		if ($this->args->start) {
+			$s = (int)$this->args->start
+			$cursor = "$s:" . self::COMMENTS_PER_PAGE;
+		}
+		$cl = CommentData::LoadForPost( $post->id, null, $this->args->cursor );
+		if (!$cl) {
+			return [
+				"result" => false
+			];
+		}
+
+	}
+
+
+	/*
+	=====================
+	RequestHandler
+	=====================
+	*/
+	public function RequestHandler()
+	{
+		$this->user = null;
+		if (!empty($_SESSION['userid'])) {
+			$this->user = UserData::Load( $_SESSION['userid'] );
+		}
+		$pp = explode( "/", $this->path );
+		$func = count($pp) >= 2 ? $pp[1] : "(empty)";
+		if (preg_match( "/^[_a-zA-Z0-9]+$/", $func )) {
+			$cmd = "cmd_" . $pp[1];
+			if (method_exists( $this, $cmd )) {
+				return $this->$cmd( array_slice( $pp, 2 ) );
+			}
+		}
+		return [
+			"alert" => "Unknown comment function " . $func;
+		];
+	}
+
+		$args = $this->args;
+		if ($args->logout) {
+			session_start();
+			session_unset();
+			session_destroy();
+			return [
+				 "run" => 'alert("You have been signed out."); window.location = "/";'
+			];
+		}
+		if (Http::$method !== "POST") {
+			Http::MethodNotAllowed();
+			return $this->ShowError( "Login form submission error" );
+		}
+		if ($args->password === null || $args->username === null) {
+			return $this->ShowError( "Login form submission error" );
+		}
+		$user = UserData::LookupUsername( $args->username );
+		if (!$user) {
+			return $this->ShowError( "Unknown user" );
+		}
+		if (!$user->CheckPassword( $args->password )) {
+			return $this->ShowError( "Incorrect password" );
+		}
+		session_start();
+		$_SESSION['userid'] = $user->id;
+		$_SESSION['username'] = $user->GetName();
+
+		$info = [
+			 "username" => $user->GetName()
+			,"id" => $user->id
+		];
+		return [
+			"run" => 'login_close(' .
+					json_encode( $info ) . 
+				");"
+		];
+	}
+
+
 	public $blog;
 
 	/*

@@ -43,7 +43,6 @@ class SecretStore
 			return false;
 		}
 		if (!$dk->Unlock( $masterKey )) {
-			var_dump( $masterKey );
 			error_log( "Failed data key unlock in Secret" );
 			return false;
 		}
