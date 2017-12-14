@@ -39,6 +39,7 @@ class ClassLoader
 				}
 			}
 		} else {
+			$name = str_replace( "\\", "/", $name );
 			include( "lib/$name.php" );
 		}
 	}
@@ -233,11 +234,11 @@ function Launch()
 		exit();
 	}
 
-	$gSecrets = new SecretStore( "res/secrets" );
-	if (!$gSecrets->Exists()) {
-		$gSecrets->Reset( gethostname() );
+	$gSecrets = new \starekrow\Lockbox\Vault( "res/secrets" );
+	if (!$gSecrets->open( gethostname() )) {
+		$gSecrets->createVault( gethostname() );
 	}
-	if (!$gSecrets->Open( gethostname() )) {
+	if (!$gSecrets->open( gethostname() )) {
 		echo "Site misconfigured";
 		die;
 	}

@@ -25,7 +25,8 @@ class PostData
 	// how long an issued access key will last, in seconds.
 	// This is used for such things as commenting on posts (so you can only
 	// comment if you can prove that you've seen the post).
-	const DEFAULT_ACCESS_TTL = 24 * 3600;
+
+	const DEFAULT_ACCESS_TTL = 86400;
 
 	/*
 	=====================
@@ -344,7 +345,7 @@ class PostData
 	with this post.
 	=====================
 	*/
-	public function GetAccessKey( $type, $ttl = 3600 * 24 )
+	public function GetAccessKey( $type, $ttl = 86400 )
 	{
 		global $gSecrets;
 		$postkey = $gSecrets->Get( "postkey" );
