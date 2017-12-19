@@ -158,6 +158,17 @@ class Bootstrap
 
 	/*
 	=====================
+	Page_phpinfo
+	=====================
+	*/
+	public static function Page_phpinfo( $path )
+	{
+		phpinfo();
+	}
+
+
+	/*
+	=====================
 	Page_adminuser
 	=====================
 	*/
