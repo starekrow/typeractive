@@ -173,17 +173,17 @@ class Bootstrap
 			$pw = $_REQUEST['password'];
 
 			$un = preg_replace( "/ +/", " ", trim( $un ) );
-			if (!User::ValidateUsername( $un )) {
+			if (!UserData::ValidateUsername( $un )) {
 				echo json_encode( [ "run" => "alert( 'Invalid username' );" ] );
 				return;
 			}
 			$pw = trim( $pw );
-			if (!User::ValidatePassword( $pw )) {
+			if (!UserData::ValidatePassword( $pw )) {
 				echo json_encode( [ "run" => "alert( 'Invalid password' );" ] );
 				return;
 			}
 
-			if (!User::Create( $un, $pw )) {
+			if (!UserData::Create( $un, $pw )) {
 				echo json_encode( [ "run" => "alert( 'Unable to create user' );" ] );
 				return;
 			}
@@ -214,13 +214,15 @@ class Bootstrap
 		$html = file_get_contents( "res/bootstrap_frame.html" );
 		$html = str_replace( "{{content}}", $content, $html );
 		$html = str_replace( "{{title}}", $title, $html );
+		$html = str_replace( "{{site-base}}", Http::$appRootUrl . "/", $html );
+
 		if (!$back) {
 			$html = str_replace( "{{backtype}}", "hidden", $html );
 		} else {
 			$html = str_replace( "{{backtype}}", "back", $html );
 			$backstr = ($back === true) ? "Back" : $back;
 			$html = str_replace( "{{back}}", $backstr, $html );
-			$html = str_replace( "{{backto}}", "", $html );
+			$html = str_replace( "{{backto}}", "--bootstrap--", $html );
 		}
 		echo $html;
 	}
@@ -230,10 +232,14 @@ class Bootstrap
 	Serve
 	=====================
 	*/
-	public static function Serve( $path )
+	public static function Serve( $request )
 	{		
-		if ($path == "" && Http::Folderize()) {
-			exit();
+		$path = $request["path"];
+		//if ($path == "" && Http::Folderize()) {
+		//	exit();
+		//}
+		if ($path === "" || $path === null || $path === false) {
+			$path = "/";
 		}
 
 		session_start();
@@ -241,17 +247,17 @@ class Bootstrap
 		if (!self::CheckAuth()) {
 			return false;
 		}
-		if ($path == "") {
+		if ($path == "/") {
 			$main = file_get_contents( "res/bootstrap_main.html" );
 			self::RenderPage( $main, "Typeractive Bootstrap" );
 			return;
 		}
 		$pp = explode( '/', $path );
-		if (preg_match( '/^[-_a-zA-Z0-9]+$/', $pp[0] )) {
-			$mth = 'Page_' . str_replace( '-', '_', $pp[0] );
+		if (preg_match( '/^[-_a-zA-Z0-9]+$/', $pp[1] )) {
+			$mth = 'Page_' . str_replace( '-', '_', $pp[1] );
 			$cls = get_called_class();
 			if (method_exists( $cls, $mth )) {
-				$cls::{$mth}( implode( '/', array_slice( $pp, 1 ) ) );
+				$cls::{$mth}( implode( '/', array_slice( $pp, 2 ) ) );
 				return;
 			}
 		}
