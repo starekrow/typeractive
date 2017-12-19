@@ -140,11 +140,12 @@ class ViewData
 		}
 		for ($tries = 2; $tries; --$tries) {
 			$vt = new SqlShadow( "viewtext" );
-			if ($vt->Load( ["text" => $text] )) {
+			if ($vt->Load( ["hash" => sha1($text,true)] )) {
 				self::RegisterText( $vt->vtid, $text );
 				return $vt->vtid;
 			}
 			$vt->text = $text;
+			$vt->hash = sha1($text,true);
 			if ($vt->Insert()) {
 				self::RegisterText( $vt->vtid, $text );
 				return $vt->vtid;
