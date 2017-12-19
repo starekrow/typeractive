@@ -301,7 +301,7 @@ class UserData
 	*/
 	public static function HashPassword( $password )
 	{
-		$pw = password_hash( $pw, PASSWORD_BCRYPT, [ "cost" => 12 ] );
+		$pw = password_hash( $password, PASSWORD_BCRYPT, [ "cost" => 12 ] );
 	}
 
 	/*
